@@ -1,9 +1,11 @@
 # Flight Management System - Design Document
 
 ## Overview
+
 A full-stack flight management web application with Customer Portal (search, book, pay, manage bookings) and Admin Portal (manage flights, airports, aircraft, pricing, revenue reports). Crew and Maintenance portals with basic functionality. Vietnamese (primary) and English (secondary) via i18n.
 
 ## Tech Stack
+
 - **Frontend**: React 19 + TypeScript + Tailwind CSS + shadcn/ui + Recharts
 - **Backend**: tRPC + Drizzle ORM + Hono + MySQL
 - **Auth**: Kimi OAuth 2.0 (built-in)
@@ -16,6 +18,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 ### Tables
 
 #### 1. users (already provided by auth)
+
 - id: serial PK
 - unionId: varchar(255) unique
 - name: varchar(255)
@@ -27,6 +30,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - lastSignInAt: timestamp
 
 #### 2. user_profiles
+
 - id: serial PK
 - userId: bigint unsigned FK → users.id
 - phone: varchar(20)
@@ -37,6 +41,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 3. airports
+
 - id: serial PK
 - code: varchar(10) unique "SGN, HAN, DAD, etc."
 - name: varchar(255)
@@ -49,6 +54,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 4. routes
+
 - id: serial PK
 - departureAirportId: bigint unsigned FK → airports.id
 - arrivalAirportId: bigint unsigned FK → airports.id
@@ -58,6 +64,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 5. aircraft
+
 - id: serial PK
 - registrationNumber: varchar(50) unique
 - model: varchar(255) "Airbus A320, Boeing 787"
@@ -71,6 +78,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 6. maintenance_logs
+
 - id: serial PK
 - aircraftId: bigint unsigned FK → aircraft.id
 - maintenanceType: enum ['routine', 'repair', 'inspection']
@@ -83,6 +91,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 7. flights
+
 - id: serial PK
 - flightNumber: varchar(20) unique "VN123"
 - routeId: bigint unsigned FK → routes.id
@@ -103,6 +112,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - updatedAt: timestamp
 
 #### 8. seats
+
 - id: serial PK
 - aircraftId: bigint unsigned FK → aircraft.id
 - seatNumber: varchar(10) "12A, 15F"
@@ -114,6 +124,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 9. flight_seats
+
 - id: serial PK
 - flightId: bigint unsigned FK → flights.id
 - seatId: bigint unsigned FK → seats.id
@@ -122,6 +133,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - bookingId: bigint unsigned FK → bookings.id (nullable)
 
 #### 10. bookings
+
 - id: serial PK
 - bookingCode: varchar(20) unique "ABC123"
 - userId: bigint unsigned FK → users.id
@@ -139,6 +151,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 11. tickets
+
 - id: serial PK
 - bookingId: bigint unsigned FK → bookings.id
 - ticketNumber: varchar(30) unique
@@ -150,6 +163,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 12. payments
+
 - id: serial PK
 - bookingId: bigint unsigned FK → bookings.id
 - amount: decimal(12,2)
@@ -161,6 +175,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 #### 13. crew_members
+
 - id: serial PK
 - userId: bigint unsigned FK → users.id
 - employeeCode: varchar(50) unique
@@ -171,6 +186,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - hiredDate: date
 
 #### 14. flight_crew
+
 - id: serial PK
 - flightId: bigint unsigned FK → flights.id
 - crewMemberId: bigint unsigned FK → crew_members.id
@@ -178,6 +194,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - assignedAt: timestamp
 
 #### 15. notifications
+
 - id: serial PK
 - userId: bigint unsigned FK → users.id
 - type: enum ['booking_confirm', 'flight_delay', 'flight_cancel', 'reminder', 'promo']
@@ -188,6 +205,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - createdAt: timestamp
 
 ### Relations (db/relations.ts)
+
 - users ↔ user_profiles (1:1)
 - users ↔ bookings (1:n)
 - users ↔ notifications (1:n)
@@ -210,6 +228,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 ## API Endpoints (tRPC Routers)
 
 ### Public Routers
+
 - **airport.list** - List all active airports
 - **airport.search** - Search airports by code/city/name
 - **airport.byId** - Get airport by ID
@@ -220,6 +239,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - **flight.seatMap** - Get seat map for a flight
 
 ### Authenticated Routers
+
 - **booking.create** - Create new booking (hold 15 min)
 - **booking.byId** - Get booking details
 - **booking.myBookings** - List user's bookings
@@ -239,6 +259,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 - **user.markNotificationRead** - Mark notification as read
 
 ### Admin Routers
+
 - **admin.stats** - Dashboard statistics
 - **admin.revenueReport** - Revenue report data
 - **admin.flightStats** - Flight occupancy stats
@@ -281,12 +302,14 @@ A full-stack flight management web application with Customer Portal (search, boo
 - **customer.byId** - Get customer details
 
 ### Crew Routers (basic)
+
 - **crew.mySchedule** - Get crew member's flight schedule
 - **crew.myFlights** - Get upcoming flights for crew
 
 ## Pages
 
 ### Customer Portal
+
 1. **Home** (`/`) - Hero, flight search form, featured destinations
 2. **Search Results** (`/search`) - Flight search results with filters
 3. **Flight Detail** (`/flights/:id`) - Flight details, seat map
@@ -297,6 +320,7 @@ A full-stack flight management web application with Customer Portal (search, boo
 8. **Notifications** (`/notifications`) - User notifications
 
 ### Admin Portal
+
 9. **Admin Dashboard** (`/admin`) - Stats cards, revenue charts, recent bookings
 10. **Flights Management** (`/admin/flights`) - CRUD flights
 11. **Airports Management** (`/admin/airports`) - CRUD airports
@@ -309,12 +333,15 @@ A full-stack flight management web application with Customer Portal (search, boo
 18. **Reports** (`/admin/reports`) - Revenue charts, occupancy stats
 
 ### Crew Portal (basic)
+
 19. **Crew Schedule** (`/crew/schedule`) - Personal flight schedule
 
 ### Auth
+
 20. **Login** (`/login`) - OAuth login
 
 ## i18n Strategy
+
 - Use react-i18next with i18next-browser-languagedetector
 - Default: Vietnamese (vi), fallback: English (en)
 - Language switcher in header
@@ -323,21 +350,24 @@ A full-stack flight management web application with Customer Portal (search, boo
 - Key convention: `page.section.element` (e.g., `home.search.title`)
 
 ## Simulated Payment
+
 - Mock payment gateway - no real integration
 - Payment methods: credit_card, debit_card, momo, zalopay, qr_code
 - Process: create payment → simulate processing → confirm after 2s delay
 - Store transaction ID as mock
 
 ## Auth Flow
+
 - Kimi OAuth 2.0 login
 - Role-based access: user/customer, admin
 - Admin routes protected by adminQuery middleware
-- Frontend route guards for /admin/* and /crew/*
+- Frontend route guards for /admin/_ and /crew/_
 
 ## Data Flow
+
 1. Customer searches flights → publicQuery.flight.search
 2. Selects flight + seats → authedQuery.booking.create
 3. Enters passenger info → booking updated
 4. Pays → authedQuery.payment.create → simulate → confirm
 5. Booking confirmed → tickets generated → notifications sent
-6. Admin manages via adminQuery.* routers
+6. Admin manages via adminQuery.\* routers

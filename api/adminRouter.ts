@@ -148,7 +148,9 @@ export const adminRouter = createRouter({
           basePrice: String(input.basePrice),
           economyPrice: String(input.economyPrice),
           premiumPrice: String(input.premiumPrice || input.economyPrice * 1.5),
-          businessPrice: String(input.businessPrice || input.economyPrice * 2.5),
+          businessPrice: String(
+            input.businessPrice || input.economyPrice * 2.5
+          ),
           status: "scheduled",
           createdBy: ctx.user.id,
         })
@@ -164,7 +166,16 @@ export const adminRouter = createRouter({
         flightNumber: z.string().optional(),
         scheduledDeparture: z.string().optional(),
         scheduledArrival: z.string().optional(),
-        status: z.enum(["scheduled", "boarding", "departed", "arrived", "delayed", "cancelled"]).optional(),
+        status: z
+          .enum([
+            "scheduled",
+            "boarding",
+            "departed",
+            "arrived",
+            "delayed",
+            "cancelled",
+          ])
+          .optional(),
         gate: z.string().optional(),
         terminal: z.string().optional(),
         economyPrice: z.number().optional(),
@@ -178,14 +189,19 @@ export const adminRouter = createRouter({
 
       const updateData: any = {};
       if (data.flightNumber) updateData.flightNumber = data.flightNumber;
-      if (data.scheduledDeparture) updateData.scheduledDeparture = new Date(data.scheduledDeparture);
-      if (data.scheduledArrival) updateData.scheduledArrival = new Date(data.scheduledArrival);
+      if (data.scheduledDeparture)
+        updateData.scheduledDeparture = new Date(data.scheduledDeparture);
+      if (data.scheduledArrival)
+        updateData.scheduledArrival = new Date(data.scheduledArrival);
       if (data.status) updateData.status = data.status;
       if (data.gate) updateData.gate = data.gate;
       if (data.terminal) updateData.terminal = data.terminal;
-      if (data.economyPrice) updateData.economyPrice = String(data.economyPrice);
-      if (data.premiumPrice) updateData.premiumPrice = String(data.premiumPrice);
-      if (data.businessPrice) updateData.businessPrice = String(data.businessPrice);
+      if (data.economyPrice)
+        updateData.economyPrice = String(data.economyPrice);
+      if (data.premiumPrice)
+        updateData.premiumPrice = String(data.premiumPrice);
+      if (data.businessPrice)
+        updateData.businessPrice = String(data.businessPrice);
 
       await db.update(flights).set(updateData).where(eq(flights.id, id));
       return { success: true };

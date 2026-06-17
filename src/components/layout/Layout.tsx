@@ -14,7 +14,8 @@ export default function Layout() {
             <div>
               <h3 className="text-lg font-semibold mb-4">SkyViet Airlines</h3>
               <p className="text-gray-400 text-sm">
-                Bay cao cùng ước mơ. Đặt vé máy bay nội địa và quốc tế với giá tốt nhất.
+                Bay cao cùng ước mơ. Đặt vé máy bay nội địa và quốc tế với giá
+                tốt nhất.
               </p>
             </div>
             <div>
@@ -36,7 +37,7 @@ export default function Layout() {
             </div>
           </div>
           <div className="mt-8 pt-4 border-t border-gray-800 text-center text-sm text-gray-500">
-             SkyViet Airlines. Group 7 - University Project.
+            SkyViet Airlines. Group 7 - University Project.
           </div>
         </div>
       </footer>

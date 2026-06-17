@@ -48,7 +48,9 @@ export default function Header() {
             <Link
               to="/"
               className={`text-sm font-medium transition-colors ${
-                isActive("/") ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                isActive("/")
+                  ? "text-blue-600"
+                  : "text-gray-700 hover:text-blue-600"
               }`}
             >
               {t("common.home")}
@@ -57,7 +59,9 @@ export default function Header() {
               <Link
                 to="/my-bookings"
                 className={`text-sm font-medium transition-colors ${
-                  isActive("/my-bookings") ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                  isActive("/my-bookings")
+                    ? "text-blue-600"
+                    : "text-gray-700 hover:text-blue-600"
                 }`}
               >
                 {t("common.myBookings")}
@@ -67,7 +71,9 @@ export default function Header() {
               <Link
                 to="/admin"
                 className={`text-sm font-medium transition-colors ${
-                  isActive("/admin") ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                  isActive("/admin")
+                    ? "text-blue-600"
+                    : "text-gray-700 hover:text-blue-600"
                 }`}
               >
                 <span className="flex items-center gap-1">
@@ -83,7 +89,11 @@ export default function Header() {
             {/* Language Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
                   <Globe className="h-4 w-4" />
                   {i18n.language === "vi" ? "VI" : "EN"}
                 </Button>
@@ -101,9 +111,15 @@ export default function Header() {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
                     <User className="h-4 w-4" />
-                    <span className="max-w-[100px] truncate">{user?.name || "User"}</span>
+                    <span className="max-w-[100px] truncate">
+                      {user?.name || "User"}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -119,7 +135,10 @@ export default function Header() {
                       {t("common.myBookings")}
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-red-600">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="flex items-center gap-2 text-red-600"
+                  >
                     <LogOut className="h-4 w-4" />
                     {t("common.logout")}
                   </DropdownMenuItem>
@@ -137,7 +156,11 @@ export default function Header() {
             className="md:hidden p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
         </div>
 
@@ -145,25 +168,53 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-3">
-              <Link to="/" className="text-sm font-medium text-gray-700" onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                to="/"
+                className="text-sm font-medium text-gray-700"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 {t("common.home")}
               </Link>
               {isAuthenticated && (
-                <Link to="/my-bookings" className="text-sm font-medium text-gray-700" onClick={() => setMobileMenuOpen(false)}>
+                <Link
+                  to="/my-bookings"
+                  className="text-sm font-medium text-gray-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   {t("common.myBookings")}
                 </Link>
               )}
               {isAdmin && (
-                <Link to="/admin" className="text-sm font-medium text-gray-700" onClick={() => setMobileMenuOpen(false)}>
+                <Link
+                  to="/admin"
+                  className="text-sm font-medium text-gray-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   {t("common.admin")}
                 </Link>
               )}
               <div className="flex space-x-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => changeLanguage("vi")}>VI</Button>
-                <Button variant="outline" size="sm" onClick={() => changeLanguage("en")}>EN</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changeLanguage("vi")}
+                >
+                  VI
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => changeLanguage("en")}
+                >
+                  EN
+                </Button>
               </div>
               {isAuthenticated ? (
-                <Button variant="ghost" onClick={logout} className="justify-start text-red-600">
+                <Button
+                  variant="ghost"
+                  onClick={logout}
+                  className="justify-start text-red-600"
+                >
                   <LogOut className="h-4 w-4 mr-2" />
                   {t("common.logout")}
                 </Button>

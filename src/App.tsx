@@ -12,7 +12,8 @@ import NotFound from "@/pages/NotFound";
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
-  if (isLoading) return <div className="flex justify-center py-20">Loading...</div>;
+  if (isLoading)
+    return <div className="flex justify-center py-20">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
@@ -20,7 +21,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex justify-center py-20">Loading...</div>;
+  if (isLoading)
+    return <div className="flex justify-center py-20">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
@@ -32,10 +34,38 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<SearchResults />} />
-        <Route path="/booking/:flightId" element={<AuthRoute><Booking /></AuthRoute>} />
-        <Route path="/my-bookings" element={<AuthRoute><MyBookings /></AuthRoute>} />
-        <Route path="/profile" element={<AuthRoute><Profile /></AuthRoute>} />
-        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route
+          path="/booking/:flightId"
+          element={
+            <AuthRoute>
+              <Booking />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/my-bookings"
+          element={
+            <AuthRoute>
+              <MyBookings />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <AuthRoute>
+              <Profile />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

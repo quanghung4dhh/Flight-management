@@ -50,7 +50,7 @@ export const bookingRouter = createRouter({
         ),
       });
 
-      const availableSeatIds = new Set(seatStatuses.map((s) => s.seatId));
+      const availableSeatIds = new Set(seatStatuses.map(s => s.seatId));
       const requestedSeatIds = new Set(input.seatIds);
 
       for (const seatId of requestedSeatIds) {

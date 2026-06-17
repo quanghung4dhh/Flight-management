@@ -23,7 +23,10 @@ export default function Booking() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
 
-  const seatClass = (searchParams.get("class") || "economy") as "economy" | "premium" | "business";
+  const seatClass = (searchParams.get("class") || "economy") as
+    | "economy"
+    | "premium"
+    | "business";
   const passengers = Number(searchParams.get("passengers") || "1");
 
   const { data: flight, isLoading: flightLoading } = trpc.flight.byId.useQuery(
@@ -37,7 +40,7 @@ export default function Booking() {
   );
 
   const createBooking = trpc.booking.create.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       setBookingId(data.bookingId);
       setBookingCode(data.bookingCode);
       setStep("payment");
@@ -45,7 +48,7 @@ export default function Booking() {
   });
 
   const createPayment = trpc.payment.create.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       setPaymentId(data.paymentId);
     },
   });
@@ -56,9 +59,14 @@ export default function Booking() {
     },
   });
 
-  const [step, setStep] = useState<"info" | "seats" | "payment" | "success">("info");
+  const [step, setStep] = useState<"info" | "seats" | "payment" | "success">(
+    "info"
+  );
   const [passengerDetails, setPassengerDetails] = useState(
-    Array.from({ length: passengers }, () => ({ name: "", type: "adult" as const }))
+    Array.from({ length: passengers }, () => ({
+      name: "",
+      type: "adult" as const,
+    }))
   );
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -80,30 +88,42 @@ export default function Booking() {
     );
   }
 
-  const price = seatClass === "business"
-    ? Number(flight.businessPrice)
-    : seatClass === "premium"
-    ? Number(flight.premiumPrice)
-    : Number(flight.economyPrice);
+  const price =
+    seatClass === "business"
+      ? Number(flight.businessPrice)
+      : seatClass === "premium"
+        ? Number(flight.premiumPrice)
+        : Number(flight.economyPrice);
 
   const totalAmount = price * passengers;
 
   const formatTime = (dateStr: string | Date) => {
-    return new Date(dateStr).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return new Date(dateStr).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const formatDate = (dateStr: string | Date) => {
-    return new Date(dateStr).toLocaleDateString("vi-VN", { weekday: "short", day: "numeric", month: "short" });
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
   };
 
-  const handlePassengerChange = (index: number, field: string, value: string) => {
+  const handlePassengerChange = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
     const updated = [...passengerDetails];
     updated[index] = { ...updated[index], [field]: value };
     setPassengerDetails(updated);
   };
 
   const handleSubmitInfo = () => {
-    if (!contactEmail || passengerDetails.some((p) => !p.name)) return;
+    if (!contactEmail || passengerDetails.some(p => !p.name)) return;
     setStep("seats");
   };
 
@@ -134,12 +154,15 @@ export default function Booking() {
     confirmPayment.mutate({ paymentId });
   };
 
-  const groupedSeats = seatMap?.reduce((acc, fs) => {
-    const row = fs.seat?.seatMapRow || 0;
-    if (!acc[row]) acc[row] = [];
-    acc[row].push(fs);
-    return acc;
-  }, {} as Record<number, typeof seatMap>);
+  const groupedSeats = seatMap?.reduce(
+    (acc, fs) => {
+      const row = fs.seat?.seatMapRow || 0;
+      if (!acc[row]) acc[row] = [];
+      acc[row].push(fs);
+      return acc;
+    },
+    {} as Record<number, typeof seatMap>
+  );
 
   if (!isAuthenticated) {
     return (
@@ -147,7 +170,9 @@ export default function Booking() {
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-gray-600 mb-4">Vui lòng đăng nhập để đặt vé</p>
-            <Button onClick={() => navigate("/login")}>{t("common.login")}</Button>
+            <Button onClick={() => navigate("/login")}>
+              {t("common.login")}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -165,8 +190,8 @@ export default function Booking() {
                 step === s || (step === "success" && i < 3)
                   ? "bg-blue-600 text-white"
                   : step === "payment" && i < 2
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-200 text-gray-600"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-600"
               }`}
             >
               {i + 1}
@@ -181,9 +206,15 @@ export default function Booking() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold">{formatTime(flight.scheduledDeparture)}</p>
-              <p className="text-sm text-gray-500">{flight.route?.departureAirport?.code}</p>
-              <p className="text-xs text-gray-400">{formatDate(flight.scheduledDeparture)}</p>
+              <p className="font-bold">
+                {formatTime(flight.scheduledDeparture)}
+              </p>
+              <p className="text-sm text-gray-500">
+                {flight.route?.departureAirport?.code}
+              </p>
+              <p className="text-xs text-gray-400">
+                {formatDate(flight.scheduledDeparture)}
+              </p>
             </div>
             <div className="flex flex-col items-center px-4">
               <p className="text-xs text-gray-500">{flight.flightNumber}</p>
@@ -197,8 +228,12 @@ export default function Booking() {
             </div>
             <div className="text-right">
               <p className="font-bold">{formatTime(flight.scheduledArrival)}</p>
-              <p className="text-sm text-gray-500">{flight.route?.arrivalAirport?.code}</p>
-              <p className="text-xs text-gray-400">{formatDate(flight.scheduledArrival)}</p>
+              <p className="text-sm text-gray-500">
+                {flight.route?.arrivalAirport?.code}
+              </p>
+              <p className="text-xs text-gray-400">
+                {formatDate(flight.scheduledArrival)}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -213,13 +248,17 @@ export default function Booking() {
           <CardContent className="space-y-6">
             {passengerDetails.map((p, i) => (
               <div key={i} className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-3">{t("common.adult")} {i + 1}</h4>
+                <h4 className="font-medium mb-3">
+                  {t("common.adult")} {i + 1}
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>{t("common.name")}</Label>
                     <Input
                       value={p.name}
-                      onChange={(e) => handlePassengerChange(i, "name", e.target.value)}
+                      onChange={e =>
+                        handlePassengerChange(i, "name", e.target.value)
+                      }
                       placeholder="Nguyen Van A"
                     />
                   </div>
@@ -239,7 +278,7 @@ export default function Booking() {
                   <Input
                     type="email"
                     value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
+                    onChange={e => setContactEmail(e.target.value)}
                     placeholder="example@email.com"
                   />
                 </div>
@@ -247,7 +286,7 @@ export default function Booking() {
                   <Label>{t("common.phone")}</Label>
                   <Input
                     value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
+                    onChange={e => setContactPhone(e.target.value)}
                     placeholder="090xxxxxxx"
                   />
                 </div>
@@ -263,7 +302,10 @@ export default function Booking() {
                   {totalAmount.toLocaleString("vi-VN")} VND
                 </p>
               </div>
-              <Button onClick={handleSubmitInfo} disabled={!contactEmail || passengerDetails.some((p) => !p.name)}>
+              <Button
+                onClick={handleSubmitInfo}
+                disabled={!contactEmail || passengerDetails.some(p => !p.name)}
+              >
                 {t("common.next")}
               </Button>
             </div>
@@ -294,46 +336,63 @@ export default function Booking() {
             </div>
 
             <div className="space-y-2">
-              {groupedSeats && Object.entries(groupedSeats).map(([row, seats]) => (
-                <div key={row} className="flex items-center justify-center gap-2">
-                  <span className="w-6 text-sm text-gray-500 text-right">{row}</span>
-                  <div className="flex gap-1">
-                    {seats?.sort((a, b) => (a.seat?.seatMapCol || 0) - (b.seat?.seatMapCol || 0)).map((fs) => {
-                      const isSelected = selectedSeats.includes(fs.seatId);
-                      const isOccupied = fs.status !== "available";
-                      const seatClass = fs.seat?.seatClass;
-                      return (
-                        <button
-                          key={fs.id}
-                          className={`w-10 h-10 rounded text-xs font-medium transition-colors ${
-                            isSelected
-                              ? "bg-blue-600 text-white"
-                              : isOccupied
-                              ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                              : seatClass === "business"
-                              ? "border-2 border-amber-500 hover:bg-amber-50"
-                              : seatClass === "premium"
-                              ? "border-2 border-blue-400 hover:bg-blue-50"
-                              : "border hover:bg-gray-50"
-                          }`}
-                          onClick={() => {
-                            if (isOccupied) return;
-                            if (isSelected) {
-                              setSelectedSeats(selectedSeats.filter((id) => id !== fs.seatId));
-                            } else if (selectedSeats.length < passengers) {
-                              setSelectedSeats([...selectedSeats, fs.seatId]);
-                            }
-                          }}
-                          disabled={isOccupied}
-                          title={`${fs.seat?.seatNumber} - ${fs.seat?.seatClass}`}
-                        >
-                          {fs.seat?.seatNumber}
-                        </button>
-                      );
-                    })}
+              {groupedSeats &&
+                Object.entries(groupedSeats).map(([row, seats]) => (
+                  <div
+                    key={row}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <span className="w-6 text-sm text-gray-500 text-right">
+                      {row}
+                    </span>
+                    <div className="flex gap-1">
+                      {seats
+                        ?.sort(
+                          (a, b) =>
+                            (a.seat?.seatMapCol || 0) -
+                            (b.seat?.seatMapCol || 0)
+                        )
+                        .map(fs => {
+                          const isSelected = selectedSeats.includes(fs.seatId);
+                          const isOccupied = fs.status !== "available";
+                          const seatClass = fs.seat?.seatClass;
+                          return (
+                            <button
+                              key={fs.id}
+                              className={`w-10 h-10 rounded text-xs font-medium transition-colors ${
+                                isSelected
+                                  ? "bg-blue-600 text-white"
+                                  : isOccupied
+                                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                                    : seatClass === "business"
+                                      ? "border-2 border-amber-500 hover:bg-amber-50"
+                                      : seatClass === "premium"
+                                        ? "border-2 border-blue-400 hover:bg-blue-50"
+                                        : "border hover:bg-gray-50"
+                              }`}
+                              onClick={() => {
+                                if (isOccupied) return;
+                                if (isSelected) {
+                                  setSelectedSeats(
+                                    selectedSeats.filter(id => id !== fs.seatId)
+                                  );
+                                } else if (selectedSeats.length < passengers) {
+                                  setSelectedSeats([
+                                    ...selectedSeats,
+                                    fs.seatId,
+                                  ]);
+                                }
+                              }}
+                              disabled={isOccupied}
+                              title={`${fs.seat?.seatNumber} - ${fs.seat?.seatClass}`}
+                            >
+                              {fs.seat?.seatNumber}
+                            </button>
+                          );
+                        })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t mt-6">
@@ -343,7 +402,9 @@ export default function Booking() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep("info")}>{t("common.back")}</Button>
+                <Button variant="outline" onClick={() => setStep("info")}>
+                  {t("common.back")}
+                </Button>
                 <Button
                   onClick={handleSubmitSeats}
                   disabled={selectedSeats.length !== passengers}
@@ -365,11 +426,19 @@ export default function Booking() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { id: "credit_card", icon: CreditCard, label: t("booking.creditCard") },
-                { id: "debit_card", icon: CreditCard, label: t("booking.debitCard") },
+                {
+                  id: "credit_card",
+                  icon: CreditCard,
+                  label: t("booking.creditCard"),
+                },
+                {
+                  id: "debit_card",
+                  icon: CreditCard,
+                  label: t("booking.debitCard"),
+                },
                 { id: "momo", icon: Wallet, label: "Momo" },
                 { id: "qr_code", icon: QrCode, label: t("booking.qrCode") },
-              ].map((method) => (
+              ].map(method => (
                 <button
                   key={method.id}
                   className={`p-4 border-2 rounded-lg flex flex-col items-center gap-2 transition-colors ${
@@ -390,8 +459,12 @@ export default function Booking() {
 
             {paymentId && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-700 font-medium">{t("booking.processing")}</p>
-                <p className="text-sm text-green-600">Transaction ID: {paymentId}</p>
+                <p className="text-green-700 font-medium">
+                  {t("booking.processing")}
+                </p>
+                <p className="text-sm text-green-600">
+                  Transaction ID: {paymentId}
+                </p>
               </div>
             )}
 
@@ -403,7 +476,9 @@ export default function Booking() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep("seats")}>{t("common.back")}</Button>
+                <Button variant="outline" onClick={() => setStep("seats")}>
+                  {t("common.back")}
+                </Button>
                 <Button
                   onClick={handleConfirmPayment}
                   disabled={!paymentId || processingPayment}
@@ -424,12 +499,20 @@ export default function Booking() {
         <Card>
           <CardContent className="p-12 text-center">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">{t("booking.bookingConfirmed")}</h2>
+            <h2 className="text-2xl font-bold mb-2">
+              {t("booking.bookingConfirmed")}
+            </h2>
             <p className="text-gray-600 mb-2">{t("booking.bookingCode")}:</p>
-            <p className="text-3xl font-bold text-blue-600 mb-6">{bookingCode}</p>
+            <p className="text-3xl font-bold text-blue-600 mb-6">
+              {bookingCode}
+            </p>
             <div className="flex justify-center gap-4">
-              <Button onClick={() => navigate("/my-bookings")}>{t("common.myBookings")}</Button>
-              <Button variant="outline" onClick={() => navigate("/")}>{t("common.home")}</Button>
+              <Button onClick={() => navigate("/my-bookings")}>
+                {t("common.myBookings")}
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/")}>
+                {t("common.home")}
+              </Button>
             </div>
           </CardContent>
         </Card>

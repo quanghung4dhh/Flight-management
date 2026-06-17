@@ -38,14 +38,16 @@ export default function Home() {
   const [passengers, setPassengers] = useState("1");
   const [seatClass, setSeatClass] = useState("economy");
 
-  const { data: airports, isLoading: airportsLoading } = trpc.airport.list.useQuery();
+  const { data: airports, isLoading: airportsLoading } =
+    trpc.airport.list.useQuery();
   const seedData = trpc.seed.run.useMutation({
     onSuccess: () => {
       window.location.reload();
     },
   });
 
-  const showSeedButton = !airportsLoading && (!airports || airports.length === 0);
+  const showSeedButton =
+    !airportsLoading && (!airports || airports.length === 0);
 
   const handleSearch = () => {
     if (!fromAirport || !toAirport || !departureDate) return;
@@ -65,7 +67,14 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <div className="relative text-white overflow-hidden" style={{ backgroundImage: 'url(/hero-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div
+        className="relative text-white overflow-hidden"
+        style={{
+          backgroundImage: "url(/hero-bg.jpg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="absolute inset-0 bg-blue-900/70" />
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
@@ -92,7 +101,9 @@ export default function Home() {
                   <Database className="h-5 w-5 mr-2" />
                   {seedData.isPending ? "Seeding..." : "Initialize Demo Data"}
                 </Button>
-                <p className="text-sm text-blue-200 mt-2">Click to load sample airports, flights, and aircraft</p>
+                <p className="text-sm text-blue-200 mt-2">
+                  Click to load sample airports, flights, and aircraft
+                </p>
               </div>
             )}
           </div>
@@ -100,10 +111,12 @@ export default function Home() {
           {/* Search Form */}
           <Card className="max-w-4xl mx-auto shadow-2xl">
             <CardContent className="p-6">
-              <Tabs value={tripType} onValueChange={(v) => setTripType(v as any)}>
+              <Tabs value={tripType} onValueChange={v => setTripType(v as any)}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="one_way">{t("home.oneWay")}</TabsTrigger>
-                  <TabsTrigger value="round_trip">{t("home.roundTrip")}</TabsTrigger>
+                  <TabsTrigger value="round_trip">
+                    {t("home.roundTrip")}
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -118,7 +131,7 @@ export default function Home() {
                       <SelectValue placeholder="Chọn sân bay" />
                     </SelectTrigger>
                     <SelectContent>
-                      {airports?.map((ap) => (
+                      {airports?.map(ap => (
                         <SelectItem key={ap.id} value={String(ap.id)}>
                           {ap.code} - {ap.city}
                         </SelectItem>
@@ -137,7 +150,7 @@ export default function Home() {
                       <SelectValue placeholder="Chọn sân bay" />
                     </SelectTrigger>
                     <SelectContent>
-                      {airports?.map((ap) => (
+                      {airports?.map(ap => (
                         <SelectItem key={ap.id} value={String(ap.id)}>
                           {ap.code} - {ap.city}
                         </SelectItem>
@@ -154,7 +167,7 @@ export default function Home() {
                   <Input
                     type="date"
                     value={departureDate}
-                    onChange={(e) => setDepartureDate(e.target.value)}
+                    onChange={e => setDepartureDate(e.target.value)}
                     min={today}
                   />
                 </div>
@@ -169,7 +182,7 @@ export default function Home() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
                         <SelectItem key={n} value={String(n)}>
                           {n} {t("common.passengers").toLowerCase()}
                         </SelectItem>
@@ -187,9 +200,15 @@ export default function Home() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="economy">{t("common.economy")}</SelectItem>
-                      <SelectItem value="premium">{t("common.premium")}</SelectItem>
-                      <SelectItem value="business">{t("common.business")}</SelectItem>
+                      <SelectItem value="economy">
+                        {t("common.economy")}
+                      </SelectItem>
+                      <SelectItem value="premium">
+                        {t("common.premium")}
+                      </SelectItem>
+                      <SelectItem value="business">
+                        {t("common.business")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -211,26 +230,68 @@ export default function Home() {
 
       {/* Popular Routes Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h2 className="text-2xl font-bold text-center mb-8">{t("home.popularRoutes")}</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">
+          {t("home.popularRoutes")}
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { from: "SGN", to: "HAN", fromCity: "Ho Chi Minh City", toCity: "Hanoi", price: "1,590,000" },
-            { from: "SGN", to: "DAD", fromCity: "Ho Chi Minh City", toCity: "Da Nang", price: "908,000" },
-            { from: "HAN", to: "DAD", fromCity: "Hanoi", toCity: "Da Nang", price: "940,000" },
-            { from: "SGN", to: "CXR", fromCity: "Ho Chi Minh City", toCity: "Nha Trang", price: "467,000" },
-            { from: "SGN", to: "PQC", fromCity: "Ho Chi Minh City", toCity: "Phu Quoc", price: "452,000" },
-            { from: "SGN", to: "SIN", fromCity: "Ho Chi Minh City", toCity: "Singapore", price: "2,340,000" },
+            {
+              from: "SGN",
+              to: "HAN",
+              fromCity: "Ho Chi Minh City",
+              toCity: "Hanoi",
+              price: "1,590,000",
+            },
+            {
+              from: "SGN",
+              to: "DAD",
+              fromCity: "Ho Chi Minh City",
+              toCity: "Da Nang",
+              price: "908,000",
+            },
+            {
+              from: "HAN",
+              to: "DAD",
+              fromCity: "Hanoi",
+              toCity: "Da Nang",
+              price: "940,000",
+            },
+            {
+              from: "SGN",
+              to: "CXR",
+              fromCity: "Ho Chi Minh City",
+              toCity: "Nha Trang",
+              price: "467,000",
+            },
+            {
+              from: "SGN",
+              to: "PQC",
+              fromCity: "Ho Chi Minh City",
+              toCity: "Phu Quoc",
+              price: "452,000",
+            },
+            {
+              from: "SGN",
+              to: "SIN",
+              fromCity: "Ho Chi Minh City",
+              toCity: "Singapore",
+              price: "2,340,000",
+            },
           ].map((route, i) => (
-            <Card key={i} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => {
-              const apFrom = airports?.find(a => a.code === route.from);
-              const apTo = airports?.find(a => a.code === route.to);
-              if (apFrom && apTo) {
-                setFromAirport(String(apFrom.id));
-                setToAirport(String(apTo.id));
-                setDepartureDate(today);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
-            }}>
+            <Card
+              key={i}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => {
+                const apFrom = airports?.find(a => a.code === route.from);
+                const apTo = airports?.find(a => a.code === route.to);
+                if (apFrom && apTo) {
+                  setFromAirport(String(apFrom.id));
+                  setToAirport(String(apTo.id));
+                  setDepartureDate(today);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -247,8 +308,12 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t text-right">
-                  <span className="text-blue-600 font-bold">{route.price} VND</span>
-                  <span className="text-sm text-gray-500 ml-1">/ {t("common.adult").toLowerCase()}</span>
+                  <span className="text-blue-600 font-bold">
+                    {route.price} VND
+                  </span>
+                  <span className="text-sm text-gray-500 ml-1">
+                    / {t("common.adult").toLowerCase()}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -259,28 +324,36 @@ export default function Home() {
       {/* Features Section */}
       <div className="bg-gray-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-center mb-12">{t("home.whyChooseUs")}</h2>
+          <h2 className="text-2xl font-bold text-center mb-12">
+            {t("home.whyChooseUs")}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="font-semibold mb-2">{t("home.feature1")}</h3>
-              <p className="text-gray-600 text-sm">Cam kết giá vé tốt nhất với nhiều ưu đãi hấp dẫn</p>
+              <p className="text-gray-600 text-sm">
+                Cam kết giá vé tốt nhất với nhiều ưu đãi hấp dẫn
+              </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="font-semibold mb-2">{t("home.feature2")}</h3>
-              <p className="text-gray-600 text-sm">Đặt vé nhanh chóng chỉ trong vài phút</p>
+              <p className="text-gray-600 text-sm">
+                Đặt vé nhanh chóng chỉ trong vài phút
+              </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Headphones className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="font-semibold mb-2">{t("home.feature3")}</h3>
-              <p className="text-gray-600 text-sm">Đội ngũ hỗ trợ tận tình 24/7</p>
+              <p className="text-gray-600 text-sm">
+                Đội ngũ hỗ trợ tận tình 24/7
+              </p>
             </div>
           </div>
         </div>

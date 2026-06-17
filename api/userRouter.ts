@@ -57,9 +57,7 @@ export const userRouter = createRouter({
           .set(profileData)
           .where(eq(userProfiles.userId, userId));
       } else {
-        await db
-          .insert(userProfiles)
-          .values({ userId, ...profileData });
+        await db.insert(userProfiles).values({ userId, ...profileData });
       }
 
       return { success: true };

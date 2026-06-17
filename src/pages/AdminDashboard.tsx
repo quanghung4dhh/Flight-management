@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/providers/trpc";
@@ -16,13 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import {
-  Plane,
-  Users,
-  CreditCard,
-  Ticket,
-  TrendingUp,
-} from "lucide-react";
+import { Plane, Users, CreditCard, Ticket, TrendingUp } from "lucide-react";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -31,19 +24,31 @@ export default function AdminDashboard() {
 
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: revenue } = trpc.admin.revenueReport.useQuery({});
-  const { data: flights } = trpc.admin.flightList.useQuery({ page: 1, limit: 10 });
-  const { data: bookings } = trpc.admin.bookingList.useQuery({ page: 1, limit: 10 });
+  const { data: flights } = trpc.admin.flightList.useQuery({
+    page: 1,
+    limit: 10,
+  });
+  const { data: bookings } = trpc.admin.bookingList.useQuery({
+    page: 1,
+    limit: 10,
+  });
 
   const formatCurrency = (amount: number) => {
     return `${(amount / 1000000).toFixed(1)}M`;
   };
 
   const formatTime = (dateStr: string | Date) => {
-    return new Date(dateStr).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return new Date(dateStr).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const formatDate = (dateStr: string | Date) => {
-    return new Date(dateStr).toLocaleDateString("vi-VN", { day: "numeric", month: "short" });
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      day: "numeric",
+      month: "short",
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -63,7 +68,7 @@ export default function AdminDashboard() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4].map(i => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -77,11 +82,19 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">{t("admin.dashboard")}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate("/admin/flights")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/admin/flights")}
+          >
             <Plane className="h-4 w-4 mr-1" />
             {t("admin.flights")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate("/admin/bookings")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/admin/bookings")}
+          >
             <Ticket className="h-4 w-4 mr-1" />
             {t("admin.bookings")}
           </Button>
@@ -94,7 +107,9 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">{t("admin.totalFlights")}</p>
+                <p className="text-sm text-gray-500">
+                  {t("admin.totalFlights")}
+                </p>
                 <p className="text-3xl font-bold">{stats?.totalFlights || 0}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -108,8 +123,12 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">{t("admin.totalBookings")}</p>
-                <p className="text-3xl font-bold">{stats?.totalBookings || 0}</p>
+                <p className="text-sm text-gray-500">
+                  {t("admin.totalBookings")}
+                </p>
+                <p className="text-3xl font-bold">
+                  {stats?.totalBookings || 0}
+                </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                 <Ticket className="h-6 w-6 text-green-600" />
@@ -136,7 +155,9 @@ export default function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">{t("admin.totalRevenue")}</p>
+                <p className="text-sm text-gray-500">
+                  {t("admin.totalRevenue")}
+                </p>
                 <p className="text-3xl font-bold">
                   {((stats?.totalRevenue || 0) / 1000000).toFixed(1)}M
                 </p>
@@ -162,13 +183,22 @@ export default function AdminDashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={revenue}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={(v) => formatDate(v)} />
-                <YAxis tickFormatter={(v) => formatCurrency(v)} />
+                <XAxis dataKey="date" tickFormatter={v => formatDate(v)} />
+                <YAxis tickFormatter={v => formatCurrency(v)} />
                 <Tooltip
-                  formatter={(value: any) => [Number(value).toLocaleString("vi-VN") + " VND", "Doanh thu"]}
-                  labelFormatter={(label) => formatDate(label)}
+                  formatter={(value: any) => [
+                    Number(value).toLocaleString("vi-VN") + " VND",
+                    "Doanh thu",
+                  ]}
+                  labelFormatter={label => formatDate(label)}
                 />
-                <Line type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2} dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -188,23 +218,39 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {bookings?.slice(0, 5).map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
+              {bookings?.slice(0, 5).map(booking => (
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-medium text-sm">{booking.bookingCode}</span>
-                      <Badge className={getStatusBadge(booking.status)}>{booking.status}</Badge>
+                      <span className="font-mono font-medium text-sm">
+                        {booking.bookingCode}
+                      </span>
+                      <Badge className={getStatusBadge(booking.status)}>
+                        {booking.status}
+                      </Badge>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      {booking.flight?.route?.departureAirport?.code} → {booking.flight?.route?.arrivalAirport?.code}
+                      {booking.flight?.route?.departureAirport?.code} →{" "}
+                      {booking.flight?.route?.arrivalAirport?.code}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{Number(booking.totalAmount).toLocaleString("vi-VN")} VND</p>
-                    <p className="text-xs text-gray-500">{booking.user?.name}</p>
+                    <p className="font-medium">
+                      {Number(booking.totalAmount).toLocaleString("vi-VN")} VND
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {booking.user?.name}
+                    </p>
                   </div>
                 </div>
-              )) || <p className="text-gray-400 text-center py-8">No bookings yet</p>}
+              )) || (
+                <p className="text-gray-400 text-center py-8">
+                  No bookings yet
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -216,23 +262,35 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {flights?.slice(0, 5).map((flight) => (
-                <div key={flight.id} className="flex items-center justify-between p-3 border rounded-lg">
+              {flights?.slice(0, 5).map(flight => (
+                <div
+                  key={flight.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{flight.flightNumber}</span>
-                      <Badge className={getStatusBadge(flight.status)}>{flight.status}</Badge>
+                      <Badge className={getStatusBadge(flight.status)}>
+                        {flight.status}
+                      </Badge>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      {flight.route?.departureAirport?.code} → {flight.route?.arrivalAirport?.code}
+                      {flight.route?.departureAirport?.code} →{" "}
+                      {flight.route?.arrivalAirport?.code}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{formatTime(flight.scheduledDeparture)}</p>
-                    <p className="text-xs text-gray-500">{formatDate(flight.scheduledDeparture)}</p>
+                    <p className="font-medium">
+                      {formatTime(flight.scheduledDeparture)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatDate(flight.scheduledDeparture)}
+                    </p>
                   </div>
                 </div>
-              )) || <p className="text-gray-400 text-center py-8">No flights yet</p>}
+              )) || (
+                <p className="text-gray-400 text-center py-8">No flights yet</p>
+              )}
             </div>
           </CardContent>
         </Card>

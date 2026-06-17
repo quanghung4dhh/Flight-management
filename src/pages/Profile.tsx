@@ -86,7 +86,7 @@ export default function Profile() {
               </Label>
               <Input
                 defaultValue={user?.name || ""}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
               />
             </div>
             <div>
@@ -103,7 +103,7 @@ export default function Profile() {
               </Label>
               <Input
                 defaultValue={user?.phone || ""}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={e => setPhone(e.target.value)}
                 placeholder="090xxxxxxx"
               />
             </div>
@@ -114,7 +114,7 @@ export default function Profile() {
               </Label>
               <Input
                 defaultValue={profile?.idCardNumber || ""}
-                onChange={(e) => setIdCard(e.target.value)}
+                onChange={e => setIdCard(e.target.value)}
               />
             </div>
             <div>
@@ -124,7 +124,7 @@ export default function Profile() {
               </Label>
               <Input
                 defaultValue={profile?.passportNumber || ""}
-                onChange={(e) => setPassport(e.target.value)}
+                onChange={e => setPassport(e.target.value)}
               />
             </div>
             <div>
@@ -134,7 +134,7 @@ export default function Profile() {
               </Label>
               <Input
                 defaultValue={profile?.nationality || ""}
-                onChange={(e) => setNationality(e.target.value)}
+                onChange={e => setNationality(e.target.value)}
               />
             </div>
             <div>
@@ -144,8 +144,12 @@ export default function Profile() {
               </Label>
               <Input
                 type="date"
-                defaultValue={profile?.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split("T")[0] : ""}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                defaultValue={
+                  profile?.dateOfBirth
+                    ? new Date(profile.dateOfBirth).toISOString().split("T")[0]
+                    : ""
+                }
+                onChange={e => setDateOfBirth(e.target.value)}
               />
             </div>
           </div>

@@ -6,13 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Plane,
-  Users,
-  ArrowRight,
-  Filter,
-  Calendar,
-} from "lucide-react";
+import { Plane, Users, ArrowRight, Filter, Calendar } from "lucide-react";
 
 export default function SearchResults() {
   const { t } = useTranslation();
@@ -23,7 +17,10 @@ export default function SearchResults() {
   const to = Number(searchParams.get("to"));
   const date = searchParams.get("date") || "";
   const passengers = Number(searchParams.get("passengers") || "1");
-  const seatClass = (searchParams.get("class") || "economy") as "economy" | "premium" | "business";
+  const seatClass = (searchParams.get("class") || "economy") as
+    | "economy"
+    | "premium"
+    | "business";
 
   const [sortBy, setSortBy] = useState<"price" | "time">("price");
 
@@ -60,7 +57,10 @@ export default function SearchResults() {
   const sortedFlights = data?.flights
     ? [...data.flights].sort((a, b) => {
         if (sortBy === "price") return Number(a.price) - Number(b.price);
-        return new Date(a.scheduledDeparture).getTime() - new Date(b.scheduledDeparture).getTime();
+        return (
+          new Date(a.scheduledDeparture).getTime() -
+          new Date(b.scheduledDeparture).getTime()
+        );
       })
     : [];
 
@@ -71,7 +71,7 @@ export default function SearchResults() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -144,23 +144,35 @@ export default function SearchResults() {
             </CardContent>
           </Card>
         ) : (
-          sortedFlights.map((flight) => (
+          sortedFlights.map(flight => (
             <Card
               key={flight.id}
               className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(`/booking/${flight.id}?class=${seatClass}&passengers=${passengers}`)}
+              onClick={() =>
+                navigate(
+                  `/booking/${flight.id}?class=${seatClass}&passengers=${passengers}`
+                )
+              }
             >
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   {/* Flight Info */}
                   <div className="flex-1 flex items-center gap-6">
                     <div className="text-center">
-                      <p className="text-2xl font-bold">{formatTime(flight.scheduledDeparture)}</p>
-                      <p className="text-sm text-gray-500">{departureAirport?.code}</p>
+                      <p className="text-2xl font-bold">
+                        {formatTime(flight.scheduledDeparture)}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {departureAirport?.code}
+                      </p>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center px-4">
-                      <p className="text-xs text-gray-500 mb-1">{formatDuration(data?.route?.estimatedDurationMinutes || 0)}</p>
+                      <p className="text-xs text-gray-500 mb-1">
+                        {formatDuration(
+                          data?.route?.estimatedDurationMinutes || 0
+                        )}
+                      </p>
                       <div className="w-full flex items-center">
                         <div className="w-2 h-2 rounded-full bg-blue-600" />
                         <div className="flex-1 h-0.5 bg-blue-600 mx-2" />
@@ -174,8 +186,12 @@ export default function SearchResults() {
                     </div>
 
                     <div className="text-center">
-                      <p className="text-2xl font-bold">{formatTime(flight.scheduledArrival)}</p>
-                      <p className="text-sm text-gray-500">{arrivalAirport?.code}</p>
+                      <p className="text-2xl font-bold">
+                        {formatTime(flight.scheduledArrival)}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {arrivalAirport?.code}
+                      </p>
                     </div>
                   </div>
 
@@ -192,7 +208,9 @@ export default function SearchResults() {
                     <p className="text-2xl font-bold text-blue-600">
                       {formatPrice(flight.price)} VND
                     </p>
-                    <p className="text-sm text-gray-500">/ {t("common.adult").toLowerCase()}</p>
+                    <p className="text-sm text-gray-500">
+                      / {t("common.adult").toLowerCase()}
+                    </p>
                     <Button className="mt-2" size="sm">
                       {t("search.select")}
                     </Button>

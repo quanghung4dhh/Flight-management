@@ -10,7 +10,13 @@ export const paymentRouter = createRouter({
       z.object({
         bookingId: z.number(),
         amount: z.number(),
-        method: z.enum(["credit_card", "debit_card", "momo", "zalopay", "qr_code"]),
+        method: z.enum([
+          "credit_card",
+          "debit_card",
+          "momo",
+          "zalopay",
+          "qr_code",
+        ]),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -38,7 +44,10 @@ export const paymentRouter = createRouter({
           status: "pending",
           transactionId,
           paymentDetails: {
-            cardLast4: input.method === "credit_card" || input.method === "debit_card" ? "4242" : null,
+            cardLast4:
+              input.method === "credit_card" || input.method === "debit_card"
+                ? "4242"
+                : null,
             methodName: input.method,
           },
         })
@@ -60,10 +69,11 @@ export const paymentRouter = createRouter({
       });
 
       if (!payment) throw new Error("Payment not found");
-      if (payment.booking?.userId !== ctx.user.id) throw new Error("Unauthorized");
+      if (payment.booking?.userId !== ctx.user.id)
+        throw new Error("Unauthorized");
 
       // Simulate processing delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Update payment status
       await db

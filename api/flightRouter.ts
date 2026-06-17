@@ -11,7 +11,10 @@ export const flightRouter = createRouter({
         departureAirportId: z.number(),
         arrivalAirportId: z.number(),
         departureDate: z.string(), // ISO date string
-        seatClass: z.enum(["economy", "premium", "business"]).optional().default("economy"),
+        seatClass: z
+          .enum(["economy", "premium", "business"])
+          .optional()
+          .default("economy"),
         passengers: z.number().min(1).max(9).optional().default(1),
       })
     )
@@ -57,7 +60,7 @@ export const flightRouter = createRouter({
 
       // Get available seat count for each flight
       const flightsWithAvailability = await Promise.all(
-        flightList.map(async (flight) => {
+        flightList.map(async flight => {
           const availableSeats = await db.query.flightSeats.findMany({
             where: and(
               eq(flightSeats.flightId, flight.id),
@@ -69,7 +72,7 @@ export const flightRouter = createRouter({
           });
 
           const classSeats = availableSeats.filter(
-            (fs) => fs.seat?.seatClass === input.seatClass
+            fs => fs.seat?.seatClass === input.seatClass
           );
 
           return {
@@ -79,8 +82,8 @@ export const flightRouter = createRouter({
               input.seatClass === "business"
                 ? flight.businessPrice
                 : input.seatClass === "premium"
-                ? flight.premiumPrice
-                : flight.economyPrice,
+                  ? flight.premiumPrice
+                  : flight.economyPrice,
           };
         })
       );

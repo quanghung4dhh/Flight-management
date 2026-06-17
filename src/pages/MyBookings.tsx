@@ -4,10 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Plane,
-  Ticket,
-} from "lucide-react";
+import { Plane, Ticket } from "lucide-react";
 
 export default function MyBookings() {
   const { t } = useTranslation();
@@ -19,11 +16,18 @@ export default function MyBookings() {
   });
 
   const formatTime = (dateStr: string | Date) => {
-    return new Date(dateStr).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return new Date(dateStr).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const formatDate = (dateStr: string | Date) => {
-    return new Date(dateStr).toLocaleDateString("vi-VN", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -40,7 +44,7 @@ export default function MyBookings() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">{t("common.myBookings")}</h1>
-        {[1, 2].map((i) => (
+        {[1, 2].map(i => (
           <Card key={i} className="mb-4">
             <CardContent className="p-6">
               <Skeleton className="h-20" />
@@ -55,7 +59,7 @@ export default function MyBookings() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">{t("common.myBookings")}</h1>
 
-      {(!bookings || bookings.length === 0) ? (
+      {!bookings || bookings.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <Ticket className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -64,7 +68,7 @@ export default function MyBookings() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {bookings.map((booking) => (
+          {bookings.map(booking => (
             <Card key={booking.id} className="overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row justify-between gap-4">
@@ -74,20 +78,31 @@ export default function MyBookings() {
                         {booking.status}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        Mã: <span className="font-mono font-medium">{booking.bookingCode}</span>
+                        Mã:{" "}
+                        <span className="font-mono font-medium">
+                          {booking.bookingCode}
+                        </span>
                       </span>
                     </div>
 
                     {booking.flight && (
                       <div className="flex items-center gap-6">
                         <div>
-                          <p className="text-xl font-bold">{formatTime(booking.flight.scheduledDeparture)}</p>
-                          <p className="text-sm text-gray-500">{booking.flight.route?.departureAirport?.code}</p>
-                          <p className="text-xs text-gray-400">{formatDate(booking.flight.scheduledDeparture)}</p>
+                          <p className="text-xl font-bold">
+                            {formatTime(booking.flight.scheduledDeparture)}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {booking.flight.route?.departureAirport?.code}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {formatDate(booking.flight.scheduledDeparture)}
+                          </p>
                         </div>
 
                         <div className="flex flex-col items-center px-4">
-                          <p className="text-xs text-gray-500">{booking.flight.flightNumber}</p>
+                          <p className="text-xs text-gray-500">
+                            {booking.flight.flightNumber}
+                          </p>
                           <div className="flex items-center my-1">
                             <div className="w-2 h-2 rounded-full bg-blue-600" />
                             <div className="w-12 h-0.5 bg-blue-600 mx-1" />
@@ -98,17 +113,27 @@ export default function MyBookings() {
                         </div>
 
                         <div>
-                          <p className="text-xl font-bold">{formatTime(booking.flight.scheduledArrival)}</p>
-                          <p className="text-sm text-gray-500">{booking.flight.route?.arrivalAirport?.code}</p>
-                          <p className="text-xs text-gray-400">{formatDate(booking.flight.scheduledArrival)}</p>
+                          <p className="text-xl font-bold">
+                            {formatTime(booking.flight.scheduledArrival)}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {booking.flight.route?.arrivalAirport?.code}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {formatDate(booking.flight.scheduledArrival)}
+                          </p>
                         </div>
                       </div>
                     )}
 
                     {booking.tickets && booking.tickets.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {booking.tickets.map((ticket) => (
-                          <Badge key={ticket.id} variant="outline" className="text-xs">
+                        {booking.tickets.map(ticket => (
+                          <Badge
+                            key={ticket.id}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             <Ticket className="h-3 w-3 mr-1" />
                             {ticket.passengerName}
                           </Badge>
@@ -120,9 +145,12 @@ export default function MyBookings() {
                   <div className="lg:text-right flex flex-row lg:flex-col justify-between lg:justify-start items-center lg:items-end gap-2">
                     <div>
                       <p className="text-lg font-bold text-blue-600">
-                        {Number(booking.totalAmount).toLocaleString("vi-VN")} VND
+                        {Number(booking.totalAmount).toLocaleString("vi-VN")}{" "}
+                        VND
                       </p>
-                      <p className="text-xs text-gray-500">{booking.paymentStatus}</p>
+                      <p className="text-xs text-gray-500">
+                        {booking.paymentStatus}
+                      </p>
                     </div>
                     {booking.status === "pending" && (
                       <Button
