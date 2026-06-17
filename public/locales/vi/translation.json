@@ -56,7 +56,7 @@
     "passport": "Hộ chiếu",
     "nationality": "Quốc tịch",
     "dateOfBirth": "Ngày sinh",
-    "adult": "Ngườới lớn",
+    "adult": "Người lớn",
     "child": "Trẻ em",
     "infant": "Em bé"
   },
@@ -115,7 +115,7 @@
     "totalFlights": "Tổng chuyến bay",
     "totalBookings": "Tổng đặt vé",
     "totalRevenue": "Tổng doanh thu",
-    "totalUsers": "Tổng ngườới dùng",
+    "totalUsers": "Tổng người dùng",
     "recentBookings": "Đặt vé gần đây",
     "revenueChart": "Biểu đồ doanh thu"
   }

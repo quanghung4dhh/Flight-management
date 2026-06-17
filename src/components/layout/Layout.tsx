@@ -32,7 +32,7 @@ export default function Layout() {
               <div className="space-y-2 text-sm text-gray-400">
                 <p>Hotline: 1900 xxxx</p>
                 <p>Email: support@skyviet.com</p>
-                <p>Địa chỉ: TP. Hồ Chí Minh</p>
+                <p>Địa chỉ: Hà Nội</p>
               </div>
             </div>
           </div>
