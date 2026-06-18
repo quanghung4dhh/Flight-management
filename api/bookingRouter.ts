@@ -13,20 +13,46 @@ function generateBookingCode(): string {
   return code;
 }
 
+async function getUniqueBookingCode(db: any): Promise<string> {
+  let code = generateBookingCode();
+  let exists = true;
+  while (exists) {
+    const result = await db.query.bookings.findFirst({
+      where: eq(bookings.bookingCode, code),
+    });
+    if (!result) exists = false;
+    else code = generateBookingCode();
+  }
+  return code;
+}
+
 function generateTicketNumber(): string {
   const prefix = "784";
   const digits = Math.floor(Math.random() * 900000000 + 100000000);
   return `${prefix}${digits}`;
 }
 
+async function getUniqueTicketNumber(db: any): Promise<string> {
+  let number = generateTicketNumber();
+  let exists = true;
+  while (exists) {
+    const result = await db.query.tickets.findFirst({
+      where: eq(tickets.ticketNumber, number),
+    });
+    if (!result) exists = false;
+    else number = generateTicketNumber();
+  }
+  return number;
+}
+
 export const bookingRouter = createRouter({
   create: authedQuery
     .input(
       z.object({
-        flightId: z.number(),
+        flightId: z.string(),
         tripType: z.enum(["one_way", "round_trip"]).default("one_way"),
-        returnFlightId: z.number().optional(),
-        seatIds: z.array(z.number()),
+        returnFlightId: z.string().optional(),
+        seatIds: z.array(z.string()),
         passengerDetails: z.array(
           z.object({
             name: z.string(),
@@ -36,85 +62,85 @@ export const bookingRouter = createRouter({
         contactEmail: z.string().email(),
         contactPhone: z.string().optional(),
         totalAmount: z.number(),
+      }).refine(data => data.passengerDetails.length === data.seatIds.length, {
+        message: "Number of passengers must match number of seats",
+        path: ["seatIds"],
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const userId = ctx.user.id;
 
-      // Check seat availability
-      const seatStatuses = await db.query.flightSeats.findMany({
-        where: and(
-          eq(flightSeats.flightId, input.flightId),
-          eq(flightSeats.status, "available")
-        ),
-      });
+      return await db.transaction(async (tx) => {
+        // Generate IDs
+        const bookingId = crypto.randomUUID();
+        const bookingCode = await getUniqueBookingCode(tx);
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
-      const availableSeatIds = new Set(seatStatuses.map(s => s.seatId));
-      const requestedSeatIds = new Set(input.seatIds);
+        // 1. Block seats atomically
+        for (const seatId of input.seatIds) {
+          const result = await tx
+            .update(flightSeats)
+            .set({ status: "blocked", bookedBy: userId, bookingID: bookingId })
+            .where(
+              and(
+                eq(flightSeats.flightID, input.flightId),
+                eq(flightSeats.seatID, seatId),
+                eq(flightSeats.status, "available")
+              )
+            );
 
-      for (const seatId of requestedSeatIds) {
-        if (!availableSeatIds.has(seatId)) {
-          throw new Error(`Seat ${seatId} is no longer available`);
+          if (result.rowCount === 0) {
+            throw new Error(`Seat ${seatId} is no longer available`);
+          }
         }
-      }
 
-      // Create booking
-      const bookingCode = generateBookingCode();
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-
-      const [{ id: bookingId }] = await db
-        .insert(bookings)
-        .values({
+        // 2. Create booking
+        await tx.insert(bookings).values({
+          bookingID: bookingId,
+          customerID: userId,
           bookingCode,
-          userId,
-          flightId: input.flightId,
+          flightID: input.flightId,
           tripType: input.tripType,
-          returnFlightId: input.returnFlightId || null,
-          status: "pending",
+          returnFlightID: input.returnFlightId || null,
           totalAmount: String(input.totalAmount),
+          status: "pending",
           paymentStatus: "pending",
-          passengerDetails: input.passengerDetails,
+          passengerDetails: JSON.stringify(input.passengerDetails),
           contactEmail: input.contactEmail,
           contactPhone: input.contactPhone || null,
+          bookDate: new Date(),
           expiresAt,
-        })
-        .$returningId();
-
-      // Block seats
-      for (const seatId of input.seatIds) {
-        await db
-          .update(flightSeats)
-          .set({ status: "blocked", bookedBy: userId, bookingId })
-          .where(
-            and(
-              eq(flightSeats.flightId, input.flightId),
-              eq(flightSeats.seatId, seatId)
-            )
-          );
-      }
-
-      // Create tickets
-      for (let i = 0; i < input.passengerDetails.length; i++) {
-        const passenger = input.passengerDetails[i];
-        await db.insert(tickets).values({
-          bookingId,
-          ticketNumber: generateTicketNumber(),
-          passengerName: passenger.name,
-          passengerType: passenger.type,
-          seatId: input.seatIds[i] || null,
-          status: "active",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         });
-      }
 
-      return { bookingId, bookingCode };
+        // 3. Create tickets
+        for (let i = 0; i < input.passengerDetails.length; i++) {
+          const passenger = input.passengerDetails[i];
+          const ticketNumber = await getUniqueTicketNumber(tx);
+          await tx.insert(tickets).values({
+            ticketID: crypto.randomUUID(),
+            bookingID: bookingId,
+            flightID: input.flightId,
+            seatID: input.seatIds[i],
+            ticketNumber,
+            passengerName: passenger.name,
+            passengerType: passenger.type,
+            status: "active",
+            purchasedPrice: String(input.totalAmount / input.passengerDetails.length),
+          });
+        }
+
+        return { bookingId, bookingCode };
+      });
     }),
 
   myBookings: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
     return db.query.bookings.findMany({
-      where: eq(bookings.userId, ctx.user.id),
+      where: eq(bookings.customerID, ctx.user.id),
       with: {
         flight: {
           with: {
@@ -133,11 +159,11 @@ export const bookingRouter = createRouter({
   }),
 
   byId: authedQuery
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const db = getDb();
       return db.query.bookings.findFirst({
-        where: and(eq(bookings.id, input.id), eq(bookings.userId, ctx.user.id)),
+        where: and(eq(bookings.bookingID, input.id), eq(bookings.customerID, ctx.user.id)),
         with: {
           flight: {
             with: {
@@ -171,12 +197,12 @@ export const bookingRouter = createRouter({
     }),
 
   cancel: authedQuery
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
 
       const booking = await db.query.bookings.findFirst({
-        where: and(eq(bookings.id, input.id), eq(bookings.userId, ctx.user.id)),
+        where: and(eq(bookings.bookingID, input.id), eq(bookings.customerID, ctx.user.id)),
       });
 
       if (!booking) throw new Error("Booking not found");
@@ -185,20 +211,20 @@ export const bookingRouter = createRouter({
       // Release seats
       await db
         .update(flightSeats)
-        .set({ status: "available", bookedBy: null, bookingId: null })
-        .where(eq(flightSeats.bookingId, input.id));
+        .set({ status: "available", bookedBy: null, bookingID: null })
+        .where(eq(flightSeats.bookingID, input.id));
 
       // Cancel booking
       await db
         .update(bookings)
         .set({ status: "cancelled" })
-        .where(eq(bookings.id, input.id));
+        .where(eq(bookings.bookingID, input.id));
 
       // Cancel tickets
       await db
         .update(tickets)
         .set({ status: "cancelled" })
-        .where(eq(tickets.bookingId, input.id));
+        .where(eq(tickets.bookingID, input.id));
 
       return { success: true };
     }),

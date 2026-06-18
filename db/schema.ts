@@ -1,85 +1,81 @@
 import {
   mysqlTable,
-  mysqlEnum,
-  serial,
   varchar,
-  text,
   timestamp,
-  bigint,
   int,
   decimal,
-  date,
-  datetime,
-  boolean,
-  json,
-  uniqueIndex,
   index,
+  json,
+  text
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
 
 // ==========================================
-// 1. USERS (local authentication)
+// ACCOUNTS
 // ==========================================
-export const users = mysqlTable("users", {
-  id: serial("id").primaryKey(),
-  email: varchar("email", { length: 320 }).notNull().unique(),
-  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  avatar: text("avatar"),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  phone: varchar("phone", { length: 20 }),
-  unionId: varchar("unionId", { length: 255 }), // Optional, for future OAuth integration
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt")
-    .defaultNow()
-    .notNull()
-    .$onUpdate(() => new Date()),
-  lastSignInAt: timestamp("lastSignInAt").defaultNow().notNull(),
-});
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-
-// ==========================================
-// 2. USER PROFILES
-// ==========================================
-export const userProfiles = mysqlTable("user_profiles", {
-  id: serial("id").primaryKey(),
-  userId: bigint("userId", { mode: "number", unsigned: true })
-    .notNull()
-    .references(() => users.id)
-    .unique(),
-  idCardNumber: varchar("id_card_number", { length: 50 }),
-  passportNumber: varchar("passport_number", { length: 50 }),
-  dateOfBirth: date("date_of_birth"),
-  nationality: varchar("nationality", { length: 100 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type UserProfile = typeof userProfiles.$inferSelect;
-export type InsertUserProfile = typeof userProfiles.$inferInsert;
-
-// ==========================================
-// 3. AIRPORTS
-// ==========================================
-export const airports = mysqlTable(
-  "airports",
+export const accounts = mysqlTable(
+  "Accounts",
   {
-    id: serial("id").primaryKey(),
-    code: varchar("code", { length: 10 }).notNull().unique(),
-    name: varchar("name", { length: 255 }).notNull(),
-    city: varchar("city", { length: 255 }).notNull(),
-    country: varchar("country", { length: 255 }).notNull(),
-    latitude: decimal("latitude", { precision: 10, scale: 8 }),
-    longitude: decimal("longitude", { precision: 11, scale: 8 }),
-    timezone: varchar("timezone", { length: 50 }),
-    status: mysqlEnum("status", ["active", "inactive"])
-      .default("active")
-      .notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    accountID: varchar("AccountID", { length: 50 }).primaryKey(),
+    username: varchar("Username", { length: 100 }).notNull().unique(),
+    password: varchar("Password", { length: 255 }).notNull(),
+    role: varchar("Role", { length: 50 }).notNull(),
+    status: varchar("Status", { length: 50 }).notNull(),
+    createdAt: timestamp("CreatedAt").defaultNow().notNull(),
+    updatedAt: timestamp("UpdatedAt")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
   },
   table => [
-    index("airport_code_idx").on(table.code),
-    index("airport_city_idx").on(table.city),
+    index("idx_account_username").on(table.username),
+    index("idx_account_role").on(table.role),
+  ]
+);
+
+export type Account = typeof accounts.$inferSelect;
+export type InsertAccount = typeof accounts.$inferInsert;
+
+// ==========================================
+// CUSTOMERS
+// ==========================================
+export const customers = mysqlTable(
+  "Customers",
+  {
+    customerID: varchar("CustomerID", { length: 50 }).primaryKey(),
+    accountID: varchar("AccountID", { length: 50 })
+      .notNull()
+      .references(() => accounts.accountID, { onDelete: "cascade" }),
+    name: varchar("Name", { length: 255 }).notNull(),
+    email: varchar("Email", { length: 255 }).notNull(),
+    phone: varchar("Phone", { length: 20 }),
+    passport: varchar("Passport", { length: 50 }),
+    address: varchar("Address", { length: 500 }),
+    birthday: timestamp("Birthday"),
+  },
+  table => [
+    index("idx_customer_account").on(table.accountID),
+    index("idx_customer_email").on(table.email),
+  ]
+);
+
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = typeof customers.$inferInsert;
+
+// ==========================================
+// AIRPORTS
+// ==========================================
+export const airports = mysqlTable(
+  "Airport",
+  {
+    airportID: varchar("AirportID", { length: 50 }).primaryKey(),
+    iataCode: varchar("IATACode", { length: 10 }).notNull().unique(),
+    city: varchar("City", { length: 100 }).notNull(),
+    country: varchar("Country", { length: 100 }).notNull(),
+  },
+  table => [
+    index("idx_airport_iata").on(table.iataCode),
+    index("idx_airport_city").on(table.city),
   ]
 );
 
@@ -87,34 +83,24 @@ export type Airport = typeof airports.$inferSelect;
 export type InsertAirport = typeof airports.$inferInsert;
 
 // ==========================================
-// 4. ROUTES
+// ROUTES
 // ==========================================
 export const routes = mysqlTable(
-  "routes",
+  "Route",
   {
-    id: serial("id").primaryKey(),
-    departureAirportId: bigint("departure_airport_id", {
-      mode: "number",
-      unsigned: true,
-    })
+    routeID: varchar("RouteID", { length: 50 }).primaryKey(),
+    departureAirportID: varchar("DepartureAirportID", { length: 50 })
       .notNull()
-      .references(() => airports.id),
-    arrivalAirportId: bigint("arrival_airport_id", {
-      mode: "number",
-      unsigned: true,
-    })
+      .references(() => airports.airportID),
+    arrivalAirportID: varchar("ArrivalAirportID", { length: 50 })
       .notNull()
-      .references(() => airports.id),
-    distanceKm: int("distance_km"),
-    estimatedDurationMinutes: int("estimated_duration_minutes"),
-    status: mysqlEnum("status", ["active", "inactive"])
-      .default("active")
-      .notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
+      .references(() => airports.airportID),
+    distance: int("Distance"),
+    duration: int("Duration"),
   },
   table => [
-    index("route_departure_idx").on(table.departureAirportId),
-    index("route_arrival_idx").on(table.arrivalAirportId),
+    index("idx_route_departure").on(table.departureAirportID),
+    index("idx_route_arrival").on(table.arrivalAirportID),
   ]
 );
 
@@ -122,372 +108,79 @@ export type Route = typeof routes.$inferSelect;
 export type InsertRoute = typeof routes.$inferInsert;
 
 // ==========================================
-// 5. AIRCRAFT
+// AIRCRAFT
 // ==========================================
-export const aircraft = mysqlTable("aircraft", {
-  id: serial("id").primaryKey(),
-  registrationNumber: varchar("registration_number", { length: 50 })
-    .notNull()
-    .unique(),
-  model: varchar("model", { length: 255 }).notNull(),
-  manufacturer: varchar("manufacturer", { length: 255 }).notNull(),
-  totalSeats: int("total_seats").notNull(),
-  economySeats: int("economy_seats").notNull(),
-  premiumSeats: int("premium_seats").notNull().default(0),
-  businessSeats: int("business_seats").notNull().default(0),
-  manufactureDate: date("manufacture_date"),
-  status: mysqlEnum("status", ["active", "maintenance", "retired"])
-    .default("active")
-    .notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+export const aircraft = mysqlTable(
+  "Aircraft",
+  {
+    aircraftID: varchar("AircraftID", { length: 50 }).primaryKey(),
+    model: varchar("Model", { length: 100 }).notNull(),
+    manufacturer: varchar("Manufacturer", { length: 100 }),
+    capacity: int("Capacity").notNull(),
+    status: varchar("Status", { length: 50 }).notNull(),
+  },
+  table => [index("idx_aircraft_status").on(table.status)]
+);
 
 export type Aircraft = typeof aircraft.$inferSelect;
 export type InsertAircraft = typeof aircraft.$inferInsert;
 
 // ==========================================
-// 6. MAINTENANCE LOGS
+// MAINTENANCE
 // ==========================================
-export const maintenanceLogs = mysqlTable(
-  "maintenance_logs",
+export const maintenance = mysqlTable(
+  "Maintenance",
   {
-    id: serial("id").primaryKey(),
-    aircraftId: bigint("aircraft_id", { mode: "number", unsigned: true })
+    maintenanceID: varchar("MaintenanceID", { length: 50 }).primaryKey(),
+    aircraftID: varchar("AircraftID", { length: 50 })
       .notNull()
-      .references(() => aircraft.id),
-    maintenanceType: mysqlEnum("maintenance_type", [
-      "routine",
-      "repair",
-      "inspection",
-    ]).notNull(),
-    description: text("description"),
-    scheduledDate: date("scheduled_date").notNull(),
-    completedDate: date("completed_date"),
-    status: mysqlEnum("status", [
-      "scheduled",
-      "in_progress",
-      "completed",
-      "cancelled",
-    ])
-      .default("scheduled")
-      .notNull(),
-    performedBy: bigint("performed_by", {
-      mode: "number",
-      unsigned: true,
-    }).references(() => users.id),
-    notes: text("notes"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  table => [index("maintenance_aircraft_idx").on(table.aircraftId)]
-);
-
-export type MaintenanceLog = typeof maintenanceLogs.$inferSelect;
-export type InsertMaintenanceLog = typeof maintenanceLogs.$inferInsert;
-
-// ==========================================
-// 7. FLIGHTS
-// ==========================================
-export const flights = mysqlTable(
-  "flights",
-  {
-    id: serial("id").primaryKey(),
-    flightNumber: varchar("flight_number", { length: 20 }).notNull().unique(),
-    routeId: bigint("route_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => routes.id),
-    aircraftId: bigint("aircraft_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => aircraft.id),
-    scheduledDeparture: datetime("scheduled_departure").notNull(),
-    scheduledArrival: datetime("scheduled_arrival").notNull(),
-    actualDeparture: datetime("actual_departure"),
-    actualArrival: datetime("actual_arrival"),
-    status: mysqlEnum("status", [
-      "scheduled",
-      "boarding",
-      "departed",
-      "arrived",
-      "delayed",
-      "cancelled",
-    ])
-      .default("scheduled")
-      .notNull(),
-    gate: varchar("gate", { length: 10 }),
-    terminal: varchar("terminal", { length: 10 }),
-    basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
-    economyPrice: decimal("economy_price", {
-      precision: 10,
-      scale: 2,
-    }).notNull(),
-    premiumPrice: decimal("premium_price", { precision: 10, scale: 2 })
-      .notNull()
-      .default("0"),
-    businessPrice: decimal("business_price", { precision: 10, scale: 2 })
-      .notNull()
-      .default("0"),
-    createdBy: bigint("created_by", {
-      mode: "number",
-      unsigned: true,
-    }).references(() => users.id),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt")
-      .defaultNow()
-      .notNull()
-      .$onUpdate(() => new Date()),
+      .references(() => aircraft.aircraftID, { onDelete: "cascade" }),
+    description: varchar("Description", { length: 1000 }),
+    startDate: timestamp("StartDate").notNull(),
+    stopDate: timestamp("StopDate"),
+    status: varchar("Status", { length: 50 }).notNull(),
   },
   table => [
-    index("flight_number_idx").on(table.flightNumber),
-    index("flight_departure_idx").on(table.scheduledDeparture),
-    index("flight_status_idx").on(table.status),
-    index("flight_route_idx").on(table.routeId),
+    index("idx_maintenance_aircraft").on(table.aircraftID),
+    index("idx_maintenance_status").on(table.status),
   ]
 );
 
-export type Flight = typeof flights.$inferSelect;
-export type InsertFlight = typeof flights.$inferInsert;
+export type Maintenance = typeof maintenance.$inferSelect;
+export type InsertMaintenance = typeof maintenance.$inferInsert;
 
 // ==========================================
-// 8. SEATS
+// CREW
 // ==========================================
-export const seats = mysqlTable(
-  "seats",
-  {
-    id: serial("id").primaryKey(),
-    aircraftId: bigint("aircraft_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => aircraft.id),
-    seatNumber: varchar("seat_number", { length: 10 }).notNull(),
-    seatClass: mysqlEnum("seat_class", [
-      "economy",
-      "premium",
-      "business",
-    ]).notNull(),
-    seatType: mysqlEnum("seat_type", [
-      "window",
-      "aisle",
-      "middle",
-      "exit_row",
-    ]).notNull(),
-    extraPrice: decimal("extra_price", { precision: 10, scale: 2 })
-      .notNull()
-      .default("0"),
-    seatMapRow: int("seat_map_row").notNull(),
-    seatMapCol: int("seat_map_col").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  table => [
-    uniqueIndex("seat_aircraft_number_idx").on(
-      table.aircraftId,
-      table.seatNumber
-    ),
-  ]
-);
-
-export type Seat = typeof seats.$inferSelect;
-export type InsertSeat = typeof seats.$inferInsert;
-
-// ==========================================
-// 9. FLIGHT SEATS
-// ==========================================
-export const flightSeats = mysqlTable(
-  "flight_seats",
-  {
-    id: serial("id").primaryKey(),
-    flightId: bigint("flight_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => flights.id),
-    seatId: bigint("seat_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => seats.id),
-    status: mysqlEnum("status", ["available", "occupied", "blocked"])
-      .default("available")
-      .notNull(),
-    bookedBy: bigint("booked_by", {
-      mode: "number",
-      unsigned: true,
-    }).references(() => users.id),
-    bookingId: bigint("booking_id", { mode: "number", unsigned: true }),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  table => [
-    uniqueIndex("flight_seat_idx").on(table.flightId, table.seatId),
-    index("flight_seat_status_idx").on(table.flightId, table.status),
-  ]
-);
-
-export type FlightSeat = typeof flightSeats.$inferSelect;
-export type InsertFlightSeat = typeof flightSeats.$inferInsert;
-
-// ==========================================
-// 10. BOOKINGS
-// ==========================================
-export const bookings = mysqlTable(
-  "bookings",
-  {
-    id: serial("id").primaryKey(),
-    bookingCode: varchar("booking_code", { length: 20 }).notNull().unique(),
-    userId: bigint("user_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => users.id),
-    flightId: bigint("flight_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => flights.id),
-    tripType: mysqlEnum("trip_type", ["one_way", "round_trip"])
-      .default("one_way")
-      .notNull(),
-    returnFlightId: bigint("return_flight_id", {
-      mode: "number",
-      unsigned: true,
-    }).references(() => flights.id),
-    status: mysqlEnum("status", [
-      "pending",
-      "confirmed",
-      "cancelled",
-      "completed",
-    ])
-      .default("pending")
-      .notNull(),
-    totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
-    paymentStatus: mysqlEnum("payment_status", [
-      "pending",
-      "paid",
-      "refunded",
-      "failed",
-    ])
-      .default("pending")
-      .notNull(),
-    passengerDetails: json("passenger_details"),
-    contactEmail: varchar("contact_email", { length: 320 }).notNull(),
-    contactPhone: varchar("contact_phone", { length: 20 }),
-    bookedAt: timestamp("booked_at").defaultNow().notNull(),
-    expiresAt: timestamp("expires_at").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  table => [
-    index("booking_user_idx").on(table.userId),
-    index("booking_code_idx").on(table.bookingCode),
-    index("booking_status_idx").on(table.status),
-  ]
-);
-
-export type Booking = typeof bookings.$inferSelect;
-export type InsertBooking = typeof bookings.$inferInsert;
-
-// ==========================================
-// 11. TICKETS
-// ==========================================
-export const tickets = mysqlTable(
-  "tickets",
-  {
-    id: serial("id").primaryKey(),
-    bookingId: bigint("booking_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => bookings.id),
-    ticketNumber: varchar("ticket_number", { length: 30 }).notNull().unique(),
-    passengerName: varchar("passenger_name", { length: 255 }).notNull(),
-    passengerType: mysqlEnum("passenger_type", ["adult", "child", "infant"])
-      .default("adult")
-      .notNull(),
-    seatId: bigint("seat_id", { mode: "number", unsigned: true }).references(
-      () => seats.id
-    ),
-    flightSeatId: bigint("flight_seat_id", {
-      mode: "number",
-      unsigned: true,
-    }).references(() => flightSeats.id),
-    status: mysqlEnum("status", ["active", "used", "cancelled", "refunded"])
-      .default("active")
-      .notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  table => [index("ticket_booking_idx").on(table.bookingId)]
-);
-
-export type Ticket = typeof tickets.$inferSelect;
-export type InsertTicket = typeof tickets.$inferInsert;
-
-// ==========================================
-// 12. PAYMENTS
-// ==========================================
-export const payments = mysqlTable(
-  "payments",
-  {
-    id: serial("id").primaryKey(),
-    bookingId: bigint("booking_id", { mode: "number", unsigned: true })
-      .notNull()
-      .references(() => bookings.id),
-    amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-    method: mysqlEnum("method", [
-      "credit_card",
-      "debit_card",
-      "momo",
-      "zalopay",
-      "qr_code",
-    ]).notNull(),
-    status: mysqlEnum("status", ["pending", "success", "failed", "refunded"])
-      .default("pending")
-      .notNull(),
-    transactionId: varchar("transaction_id", { length: 255 }).unique(),
-    paymentDetails: json("payment_details"),
-    paidAt: timestamp("paid_at"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-  },
-  table => [index("payment_booking_idx").on(table.bookingId)]
-);
-
-export type Payment = typeof payments.$inferSelect;
-export type InsertPayment = typeof payments.$inferInsert;
-
-// ==========================================
-// 13. CREW MEMBERS
-// ==========================================
-export const crewMembers = mysqlTable("crew_members", {
-  id: serial("id").primaryKey(),
-  userId: bigint("user_id", { mode: "number", unsigned: true })
-    .notNull()
-    .references(() => users.id)
-    .unique(),
-  employeeCode: varchar("employee_code", { length: 50 }).notNull().unique(),
-  position: mysqlEnum("position", [
-    "captain",
-    "first_officer",
-    "flight_attendant",
-  ]).notNull(),
-  licenseNumber: varchar("license_number", { length: 100 }),
-  totalFlyingHours: int("total_flying_hours").notNull().default(0),
-  status: mysqlEnum("status", ["active", "inactive", "on_leave"])
-    .default("active")
-    .notNull(),
-  hiredDate: date("hired_date"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const crew = mysqlTable("Crew", {
+  crewID: varchar("CrewID", { length: 50 }).primaryKey(),
+  name: varchar("Name", { length: 255 }).notNull(),
+  role: varchar("Role", { length: 100 }).notNull(),
+  licenseNumber: varchar("LicenseNumber", { length: 100 }),
+  status: varchar("Status", { length: 50 }).notNull(),
 });
 
-export type CrewMember = typeof crewMembers.$inferSelect;
-export type InsertCrewMember = typeof crewMembers.$inferInsert;
+export type Crew = typeof crew.$inferSelect;
+export type InsertCrew = typeof crew.$inferInsert;
 
 // ==========================================
-// 14. FLIGHT CREW
+// FLIGHT CREW
 // ==========================================
 export const flightCrew = mysqlTable(
-  "flight_crew",
+  "FlightCrew",
   {
-    id: serial("id").primaryKey(),
-    flightId: bigint("flight_id", { mode: "number", unsigned: true })
+    flightCrewID: varchar("FlightCrewID", { length: 50 }).primaryKey(),
+    flightID: varchar("FlightID", { length: 50 })
       .notNull()
-      .references(() => flights.id),
-    crewMemberId: bigint("crew_member_id", { mode: "number", unsigned: true })
+      .references(() => flights.flightID, { onDelete: "cascade" }),
+    crewID: varchar("CrewID", { length: 50 })
       .notNull()
-      .references(() => crewMembers.id),
-    roleOnFlight: mysqlEnum("role_on_flight", [
-      "captain",
-      "first_officer",
-      "lead_attendant",
-      "attendant",
-    ]).notNull(),
-    assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+      .references(() => crew.crewID, { onDelete: "cascade" }),
+    assignmentRole: varchar("AssignmentRole", { length: 100 }).notNull(),
   },
   table => [
-    uniqueIndex("flight_crew_idx").on(table.flightId, table.crewMemberId),
+    index("idx_flight_crew_flight").on(table.flightID),
+    index("idx_flight_crew_crew").on(table.crewID),
   ]
 );
 
@@ -495,33 +188,422 @@ export type FlightCrew = typeof flightCrew.$inferSelect;
 export type InsertFlightCrew = typeof flightCrew.$inferInsert;
 
 // ==========================================
-// 15. NOTIFICATIONS
+// FLIGHT SEATS
 // ==========================================
-export const notifications = mysqlTable(
-  "notifications",
+export const flightSeats = mysqlTable(
+  "FlightSeat",
   {
-    id: serial("id").primaryKey(),
-    userId: bigint("user_id", { mode: "number", unsigned: true })
+    flightSeatID: varchar("FlightSeatID", { length: 50 }).primaryKey(),
+    flightID: varchar("FlightID", { length: 50 })
       .notNull()
-      .references(() => users.id),
-    type: mysqlEnum("type", [
-      "booking_confirm",
-      "flight_delay",
-      "flight_cancel",
-      "reminder",
-      "promo",
-    ]).notNull(),
-    title: varchar("title", { length: 255 }).notNull(),
-    message: text("message").notNull(),
-    isRead: boolean("is_read").notNull().default(false),
-    metadata: json("metadata"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
+      .references(() => flights.flightID),
+    seatID: varchar("SeatID", { length: 50 })
+      .notNull()
+      .references(() => seats.seatID),
+    status: varchar("Status", { length: 50 }).notNull(),
+    bookedBy: varchar("BookedBy", { length: 50 })
+      .references(() => customers.customerID),
+    bookingID: varchar("BookingID", { length: 50 })
+      .references(() => bookings.bookingID),
+    createdAt: timestamp("CreatedAt").defaultNow().notNull(),
   },
   table => [
-    index("notification_user_idx").on(table.userId),
-    index("notification_read_idx").on(table.isRead),
+    index("idx_flight_seat_flight").on(table.flightID),
+    index("idx_flight_seat_status").on(table.status),
+  ]
+);
+
+export type FlightSeat = typeof flightSeats.$inferSelect;
+export type InsertFlightSeat = typeof flightSeats.$inferInsert;
+
+// ==========================================
+export const seatClass = mysqlTable("SeatClass", {
+  seatClassID: varchar("SeatClassID", { length: 50 }).primaryKey(),
+  name: varchar("Name", { length: 100 }).notNull(),
+});
+
+export type SeatClass = typeof seatClass.$inferSelect;
+export type InsertSeatClass = typeof seatClass.$inferInsert;
+
+// ==========================================
+// SEATS
+// ==========================================
+export const seats = mysqlTable(
+  "Seat",
+  {
+    seatID: varchar("SeatID", { length: 50 }).primaryKey(),
+    aircraftID: varchar("AircraftID", { length: 50 })
+      .notNull()
+      .references(() => aircraft.aircraftID, { onDelete: "cascade" }),
+    seatClassID: varchar("SeatClassID", { length: 50 })
+      .notNull()
+      .references(() => seatClass.seatClassID),
+    seatNumber: varchar("SeatNumber", { length: 10 }).notNull(),
+  },
+  table => [
+    index("idx_seat_aircraft").on(table.aircraftID),
+    index("idx_seat_class").on(table.seatClassID),
+  ]
+);
+
+export type Seat = typeof seats.$inferSelect;
+export type InsertSeat = typeof seats.$inferInsert;
+
+// ==========================================
+// FLIGHTS
+// ==========================================
+export const flights = mysqlTable(
+  "Flight",
+  {
+    flightID: varchar("FlightID", { length: 50 }).primaryKey(),
+    routeID: varchar("RouteID", { length: 50 })
+      .notNull()
+      .references(() => routes.routeID),
+    aircraftID: varchar("AircraftID", { length: 50 })
+      .notNull()
+      .references(() => aircraft.aircraftID),
+    scheduledDeparture: timestamp("ScheduledDeparture").notNull(),
+    scheduledArrival: timestamp("ScheduledArrival").notNull(),
+    actualDeparture: timestamp("ActualDeparture"),
+    actualArrival: timestamp("ActualArrival"),
+    status: varchar("Status", { length: 50 }).notNull(),
+    createdAt: timestamp("CreatedAt").defaultNow().notNull(),
+    updatedAt: timestamp("UpdatedAt")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  table => [
+    index("idx_flight_route").on(table.routeID),
+    index("idx_flight_aircraft").on(table.aircraftID),
+    index("idx_flight_departure").on(table.scheduledDeparture),
+    index("idx_flight_status").on(table.status),
+  ]
+);
+
+export type Flight = typeof flights.$inferSelect;
+export type InsertFlight = typeof flights.$inferInsert;
+
+// ==========================================
+// FLIGHT PRICING
+// ==========================================
+export const flightPricing = mysqlTable(
+  "FlightPricing",
+  {
+    pricingID: varchar("PricingID", { length: 50 }).primaryKey(),
+    flightID: varchar("FlightID", { length: 50 })
+      .notNull()
+      .references(() => flights.flightID, { onDelete: "cascade" }),
+    seatClassID: varchar("SeatClassID", { length: 50 })
+      .notNull()
+      .references(() => seatClass.seatClassID),
+    basePrice: decimal("BasePrice", { precision: 15, scale: 2 }).notNull(),
+  },
+  table => [
+    index("idx_pricing_flight").on(table.flightID),
+    index("idx_pricing_class").on(table.seatClassID),
+  ]
+);
+
+export type FlightPricing = typeof flightPricing.$inferSelect;
+export type InsertFlightPricing = typeof flightPricing.$inferInsert;
+
+// ==========================================
+// BOOKINGS
+// ==========================================
+export const bookings = mysqlTable(
+  "Booking",
+  {
+    bookingID: varchar("BookingID", { length: 50 }).primaryKey(),
+    customerID: varchar("CustomerID", { length: 50 })
+      .notNull()
+      .references(() => customers.customerID, { onDelete: "cascade" }),
+    bookingCode: varchar("BookingCode", { length: 20 }).notNull().unique(),
+    flightID: varchar("FlightID", { length: 50 })
+      .notNull()
+      .references(() => flights.flightID),
+    tripType: varchar("TripType", { length: 20 }).notNull(),
+    returnFlightID: varchar("ReturnFlightID", { length: 50 })
+      .references(() => flights.flightID),
+    totalAmount: decimal("TotalAmount", { precision: 15, scale: 2 }).notNull(),
+    status: varchar("Status", { length: 50 }).notNull(),
+    paymentStatus: varchar("PaymentStatus", { length: 50 }).notNull(),
+    passengerDetails: text("PassengerDetails"), // Using text for JSON representation in MySQL
+    contactEmail: varchar("ContactEmail", { length: 320 }).notNull(),
+    contactPhone: varchar("ContactPhone", { length: 20 }),
+    bookDate: timestamp("BookDate").notNull(),
+    expiresAt: timestamp("ExpiresAt").notNull(),
+    createdAt: timestamp("CreatedAt").defaultNow().notNull(),
+    updatedAt: timestamp("UpdatedAt")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  table => [
+    index("idx_booking_customer").on(table.customerID),
+    index("idx_booking_status").on(table.status),
+    index("idx_booking_code").on(table.bookingCode),
+  ]
+);
+
+export type Booking = typeof bookings.$inferSelect;
+export type InsertBooking = typeof bookings.$inferInsert;
+
+// ==========================================
+// TICKETS
+// ==========================================
+export const tickets = mysqlTable(
+  "Ticket",
+  {
+    ticketID: varchar("TicketID", { length: 50 }).primaryKey(),
+    bookingID: varchar("BookingID", { length: 50 })
+      .notNull()
+      .references(() => bookings.bookingID, { onDelete: "cascade" }),
+    flightID: varchar("FlightID", { length: 50 })
+      .notNull()
+      .references(() => flights.flightID),
+    seatID: varchar("SeatID", { length: 50 })
+      .notNull()
+      .references(() => seats.seatID),
+    status: varchar("Status", { length: 50 }).notNull(),
+    passengerName: varchar("PassengerName", { length: 255 }).notNull(),
+    passengerPassport: varchar("PassengerPassport", { length: 50 }),
+    passengerDOB: timestamp("PassengerDOB"),
+    purchasedPrice: decimal("PurchasedPrice", {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+  },
+  table => [
+    index("idx_ticket_booking").on(table.bookingID),
+    index("idx_ticket_flight").on(table.flightID),
+    index("idx_ticket_seat").on(table.seatID),
+    index("idx_ticket_status").on(table.status),
+  ]
+);
+
+export type Ticket = typeof tickets.$inferSelect;
+export type InsertTicket = typeof tickets.$inferInsert;
+
+// ==========================================
+// PAYMENTS
+// ==========================================
+export const payments = mysqlTable(
+  "Payment",
+  {
+    paymentID: varchar("PaymentID", { length: 50 }).primaryKey(),
+    transactionID: varchar("TransactionID", { length: 100 }),
+    bookingID: varchar("BookingID", { length: 50 })
+      .notNull()
+      .references(() => bookings.bookingID, { onDelete: "cascade" }),
+    payDate: timestamp("PayDate").notNull(),
+    status: varchar("Status", { length: 50 }).notNull(),
+    method: varchar("Method", { length: 50 }).notNull(),
+    createdAt: timestamp("CreatedAt").defaultNow().notNull(),
+    updatedAt: timestamp("UpdatedAt")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  table => [
+    index("idx_payment_booking").on(table.bookingID),
+    index("idx_payment_status").on(table.status),
+  ]
+);
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+// ==========================================
+// BAGGAGE
+// ==========================================
+export const baggage = mysqlTable(
+  "Baggage",
+  {
+    baggageID: varchar("BaggageID", { length: 50 }).primaryKey(),
+    ticketID: varchar("TicketID", { length: 50 })
+      .notNull()
+      .references(() => tickets.ticketID, { onDelete: "cascade" }),
+    weight: int("Weight"),
+    price: decimal("Price", { precision: 15, scale: 2 }),
+  },
+  table => [index("idx_baggage_ticket").on(table.ticketID)]
+);
+
+export type Baggage = typeof baggage.$inferSelect;
+export type InsertBaggage = typeof baggage.$inferInsert;
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+export const notifications = mysqlTable(
+  "Notification",
+  {
+    notificationID: varchar("NotificationID", { length: 50 }).primaryKey(),
+    accountID: varchar("AccountID", { length: 50 })
+      .notNull()
+      .references(() => accounts.accountID, { onDelete: "cascade" }),
+    type: varchar("Type", { length: 50 }).notNull(),
+    message: varchar("Message", { length: 1000 }).notNull(),
+    sentAt: timestamp("SentAt").notNull(),
+    status: varchar("Status", { length: 50 }).notNull(),
+  },
+  table => [
+    index("idx_notification_account").on(table.accountID),
+    index("idx_notification_status").on(table.status),
   ]
 );
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+// ==========================================
+// RELATIONS
+// ==========================================
+export const accountsRelations = relations(accounts, ({ one, many }) => ({
+  customer: one(customers),
+  notifications: many(notifications),
+}));
+
+export const customersRelations = relations(customers, ({ one, many }) => ({
+  account: one(accounts, {
+    fields: [customers.accountID],
+    references: [accounts.accountID],
+  }),
+  bookings: many(bookings),
+}));
+
+export const airportsRelations = relations(airports, ({ many }) => ({
+  departingRoutes: many(routes, { relationName: "departure" }),
+  arrivingRoutes: many(routes, { relationName: "arrival" }),
+}));
+
+export const routesRelations = relations(routes, ({ one, many }) => ({
+  departureAirport: one(airports, {
+    fields: [routes.departureAirportID],
+    references: [airports.airportID],
+    relationName: "departure",
+  }),
+  arrivalAirport: one(airports, {
+    fields: [routes.arrivalAirportID],
+    references: [airports.airportID],
+    relationName: "arrival",
+  }),
+  flights: many(flights),
+}));
+
+export const aircraftRelations = relations(aircraft, ({ many }) => ({
+  flights: many(flights),
+  seats: many(seats),
+  maintenance: many(maintenance),
+}));
+
+export const maintenanceRelations = relations(maintenance, ({ one }) => ({
+  aircraft: one(aircraft, {
+    fields: [maintenance.aircraftID],
+    references: [aircraft.aircraftID],
+  }),
+}));
+
+export const crewRelations = relations(crew, ({ many }) => ({
+  flightAssignments: many(flightCrew),
+}));
+
+export const flightCrewRelations = relations(flightCrew, ({ one }) => ({
+  flight: one(flights, {
+    fields: [flightCrew.flightID],
+    references: [flights.flightID],
+  }),
+  crew: one(crew, {
+    fields: [flightCrew.crewID],
+    references: [crew.crewID],
+  }),
+}));
+
+export const flightsRelations = relations(flights, ({ one, many }) => ({
+  route: one(routes, {
+    fields: [flights.routeID],
+    references: [routes.routeID],
+  }),
+  aircraft: one(aircraft, {
+    fields: [flights.aircraftID],
+    references: [aircraft.aircraftID],
+  }),
+  pricing: many(flightPricing),
+  tickets: many(tickets),
+  crew: many(flightCrew),
+}));
+
+export const seatClassRelations = relations(seatClass, ({ many }) => ({
+  seats: many(seats),
+  pricing: many(flightPricing),
+}));
+
+export const seatsRelations = relations(seats, ({ one, many }) => ({
+  aircraft: one(aircraft, {
+    fields: [seats.aircraftID],
+    references: [aircraft.aircraftID],
+  }),
+  seatClass: one(seatClass, {
+    fields: [seats.seatClassID],
+    references: [seatClass.seatClassID],
+  }),
+  tickets: many(tickets),
+}));
+
+export const flightPricingRelations = relations(flightPricing, ({ one }) => ({
+  flight: one(flights, {
+    fields: [flightPricing.flightID],
+    references: [flights.flightID],
+  }),
+  seatClass: one(seatClass, {
+    fields: [flightPricing.seatClassID],
+    references: [seatClass.seatClassID],
+  }),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one, many }) => ({
+  customer: one(customers, {
+    fields: [bookings.customerID],
+    references: [customers.customerID],
+  }),
+  tickets: many(tickets),
+  payments: many(payments),
+}));
+
+export const ticketsRelations = relations(tickets, ({ one, many }) => ({
+  booking: one(bookings, {
+    fields: [tickets.bookingID],
+    references: [bookings.bookingID],
+  }),
+  flight: one(flights, {
+    fields: [tickets.flightID],
+    references: [flights.flightID],
+  }),
+  seat: one(seats, {
+    fields: [tickets.seatID],
+    references: [seats.seatID],
+  }),
+  baggage: many(baggage),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [payments.bookingID],
+    references: [bookings.bookingID],
+  }),
+}));
+
+export const baggageRelations = relations(baggage, ({ one }) => ({
+  ticket: one(tickets, {
+    fields: [baggage.ticketID],
+    references: [tickets.ticketID],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  account: one(accounts, {
+    fields: [notifications.accountID],
+    references: [accounts.accountID],
+  }),
+}));
