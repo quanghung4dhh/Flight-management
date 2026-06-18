@@ -1,13 +1,13 @@
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import type { User } from "@db/schema";
+import type { Account } from "@db/schema";
 import * as cookie from "cookie";
 import { verifySessionToken } from "./auth/session";
-import { findUserById } from "./queries/users";
+import { findAccountById } from "./queries/accounts.js";
 
 export type TrpcContext = {
   req: Request;
   resHeaders: Headers;
-  user?: User;
+  user?: Account;  // ← Đổi từ User sang Account
 };
 
 export async function createContext(
@@ -22,7 +22,8 @@ export async function createContext(
     const payload = await verifySessionToken(token);
     if (!payload) return ctx;
 
-    const user = await findUserById(parseInt(payload.userId));
+    // ← Đổi từ parseInt(payload.userId) sang payload.accountID (string)
+    const user = await findAccountById(payload.accountID as string);
     if (user) ctx.user = user;
   } catch {
     // Authentication is optional

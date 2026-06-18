@@ -8,106 +8,75 @@ export const paymentRouter = createRouter({
   create: authedQuery
     .input(
       z.object({
-        bookingId: z.number(),
+        bookingId: z.string(),
         amount: z.number(),
-        method: z.enum([
-          "credit_card",
-          "debit_card",
-          "momo",
-          "zalopay",
-          "qr_code",
-        ]),
+        method: z.enum(["credit_card", "bank_transfer", "momo"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
 
-      // Verify booking belongs to user
-      const booking = await db.query.bookings.findFirst({
-        where: and(
-          eq(bookings.id, input.bookingId),
-          eq(bookings.userId, ctx.user.id)
-        ),
-      });
+      const bookingResult = await db
+        .select()
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.bookingID, input.bookingId),
+            eq(bookings.customerID, ctx.user?.accountID || "")
+          )
+        )
+        .limit(1);
 
-      if (!booking) throw new Error("Booking not found");
-      if (booking.paymentStatus === "paid") throw new Error("Already paid");
+      if (bookingResult.length === 0) throw new Error("Booking not found");
 
       const transactionId = `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-      const [{ id: paymentId }] = await db
-        .insert(payments)
-        .values({
-          bookingId: input.bookingId,
-          amount: String(input.amount),
-          method: input.method,
-          status: "pending",
-          transactionId,
-          paymentDetails: {
-            cardLast4:
-              input.method === "credit_card" || input.method === "debit_card"
-                ? "4242"
-                : null,
-            methodName: input.method,
-          },
-        })
-        .$returningId();
+      await db.insert(payments).values({
+        paymentID: crypto.randomUUID().slice(0, 10),
+        transactionID: transactionId,
+        bookingID: input.bookingId,
+        payDate: new Date(),
+        method: input.method,
+        status: "pending",
+      });
 
-      return { paymentId, transactionId, status: "pending" };
+      return { transactionId, status: "pending" };
     }),
 
   confirm: authedQuery
-    .input(z.object({ paymentId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .input(z.object({ paymentId: z.string() }))
+    .mutation(async ({ input }) => {
       const db = getDb();
 
-      const payment = await db.query.payments.findFirst({
-        where: eq(payments.id, input.paymentId),
-        with: {
-          booking: true,
-        },
-      });
+      const paymentResult = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.paymentID, input.paymentId))
+        .limit(1);
 
-      if (!payment) throw new Error("Payment not found");
-      if (payment.booking?.userId !== ctx.user.id)
-        throw new Error("Unauthorized");
+      if (paymentResult.length === 0) throw new Error("Payment not found");
+      const payment = paymentResult[0];
 
-      // Simulate processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Update payment status
       await db
         .update(payments)
-        .set({
-          status: "success",
-          paidAt: new Date(),
-        })
-        .where(eq(payments.id, input.paymentId));
+        .set({ status: "paid" })
+        .where(eq(payments.paymentID, input.paymentId));
 
-      // Update booking status
       await db
         .update(bookings)
-        .set({
-          status: "confirmed",
-          paymentStatus: "paid",
-        })
-        .where(eq(bookings.id, payment.bookingId));
+        .set({ status: "confirmed" })
+        .where(eq(bookings.bookingID, payment.bookingID));
 
-      return { success: true, status: "success" };
+      return { success: true, status: "paid" };
     }),
 
   myPayments: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
-    return db.query.payments.findMany({
-      where: eq(payments.id, ctx.user.id),
-      with: {
-        booking: {
-          with: {
-            flight: true,
-          },
-        },
-      },
-      orderBy: desc(payments.createdAt),
-    });
+    return db
+      .select()
+      .from(payments)
+      .innerJoin(bookings, eq(payments.bookingID, bookings.bookingID))
+      .where(eq(bookings.customerID, ctx.user?.accountID || ""))
+      .orderBy(desc(payments.createdAt));
   }),
 });

@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 
-type LoginForm = { email: string; password: string };
-type SignupForm = { email: string; password: string; name: string };
+// ✅ Đổi từ email sang username
+type LoginForm = { username: string; password: string };
+type SignupForm = { username: string; password: string; name: string };
 
 export default function Login() {
   const [isSignup, setIsSignup] = useState(false);
@@ -56,12 +57,13 @@ export default function Login() {
               className="space-y-4"
             >
               <div>
-                <Label htmlFor="email">Email</Label>
+                {/* ✅ Đổi label và input */}
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  {...loginForm.register("email", { required: true })}
-                  placeholder="you@example.com"
+                  id="username"
+                  type="text"  // ✅ Đổi từ email sang text
+                  {...loginForm.register("username", { required: true })}
+                  placeholder="Enter username"
                 />
               </div>
               <div>
@@ -109,12 +111,13 @@ export default function Login() {
                 />
               </div>
               <div>
-                <Label htmlFor="signup-email">Email</Label>
+                {/* ✅ Đổi label và input */}
+                <Label htmlFor="signup-username">Username</Label>
                 <Input
-                  id="signup-email"
-                  type="email"
-                  {...signupForm.register("email", { required: true })}
-                  placeholder="you@example.com"
+                  id="signup-username"
+                  type="text"  // ✅ Đổi từ email sang text
+                  {...signupForm.register("username", { required: true })}
+                  placeholder="Enter username"
                 />
               </div>
               <div>
@@ -123,7 +126,7 @@ export default function Login() {
                   id="signup-password"
                   type="password"
                   {...signupForm.register("password", { required: true })}
-                  placeholder="At least 8 characters"
+                  placeholder="At least 6 characters"
                 />
               </div>
               <Button

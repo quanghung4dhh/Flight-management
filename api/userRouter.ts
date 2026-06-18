@@ -1,19 +1,28 @@
 import { z } from "zod";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, userProfiles, notifications } from "@db/schema";
+import { accounts, customers, notifications } from "@db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export const userRouter = createRouter({
   profile: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, ctx.user.id),
-      with: {
-        profile: true,
-      },
-    });
-    return user;
+    const account = await db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.accountID, ctx.user.accountID))
+      .limit(1);
+
+    const customer = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.accountID, ctx.user.accountID))
+      .limit(1);
+
+    return {
+      ...account[0],
+      customer: customer[0] || null,
+    };
   }),
 
   updateProfile: authedQuery
@@ -21,43 +30,46 @@ export const userRouter = createRouter({
       z.object({
         name: z.string().optional(),
         phone: z.string().optional(),
-        idCardNumber: z.string().optional(),
-        passportNumber: z.string().optional(),
-        dateOfBirth: z.string().optional(),
-        nationality: z.string().optional(),
+        email: z.string().optional(),
+        passport: z.string().optional(),
+        address: z.string().optional(),
+        birthday: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
-      const userId = ctx.user.id;
+      const accountID = ctx.user.accountID;
 
-      // Update user name and phone
-      if (input.name || input.phone) {
+      const existingCustomer = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.accountID, accountID))
+        .limit(1);
+
+      if (existingCustomer.length > 0) {
         const updateData: any = {};
         if (input.name) updateData.name = input.name;
         if (input.phone) updateData.phone = input.phone;
-        await db.update(users).set(updateData).where(eq(users.id, userId));
-      }
+        if (input.email) updateData.email = input.email;
+        if (input.passport) updateData.passport = input.passport;
+        if (input.address) updateData.address = input.address;
+        if (input.birthday) updateData.birthday = new Date(input.birthday);
 
-      // Upsert user profile
-      const existingProfile = await db.query.userProfiles.findFirst({
-        where: eq(userProfiles.userId, userId),
-      });
-
-      const profileData: any = {
-        idCardNumber: input.idCardNumber || null,
-        passportNumber: input.passportNumber || null,
-        dateOfBirth: input.dateOfBirth ? new Date(input.dateOfBirth) : null,
-        nationality: input.nationality || null,
-      };
-
-      if (existingProfile) {
         await db
-          .update(userProfiles)
-          .set(profileData)
-          .where(eq(userProfiles.userId, userId));
+          .update(customers)
+          .set(updateData)
+          .where(eq(customers.accountID, accountID));
       } else {
-        await db.insert(userProfiles).values({ userId, ...profileData });
+        await db.insert(customers).values({
+          customerID: crypto.randomUUID().slice(0, 10),
+          accountID,
+          name: input.name || ctx.user.username,
+          email: input.email || "",
+          phone: input.phone || null,
+          passport: input.passport || null,
+          address: input.address || null,
+          birthday: input.birthday ? new Date(input.birthday) : null,
+        });
       }
 
       return { success: true };
@@ -65,24 +77,25 @@ export const userRouter = createRouter({
 
   notifications: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
-    return db.query.notifications.findMany({
-      where: eq(notifications.userId, ctx.user.id),
-      orderBy: desc(notifications.createdAt),
-      limit: 50,
-    });
+    return db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.accountID, ctx.user.accountID))
+      .orderBy(desc(notifications.sentAt))
+      .limit(50);
   }),
 
   markNotificationRead: authedQuery
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       await db
         .update(notifications)
-        .set({ isRead: true })
+        .set({ status: "read" })
         .where(
           and(
-            eq(notifications.id, input.id),
-            eq(notifications.userId, ctx.user.id)
+            eq(notifications.notificationID, input.id),
+            eq(notifications.accountID, ctx.user.accountID)
           )
         );
       return { success: true };

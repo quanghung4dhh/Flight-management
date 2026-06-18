@@ -6,9 +6,10 @@ import {
   airports,
   aircraft,
   bookings,
-  users,
-  crewMembers,
-  maintenanceLogs,
+  accounts,
+  customers,
+  crew,
+  maintenance,
   payments,
 } from "@db/schema";
 import { eq, and, desc, sql, gte, lte, count } from "drizzle-orm";
@@ -20,29 +21,22 @@ export const adminRouter = createRouter({
 
     const totalFlights = await db.select({ count: count() }).from(flights);
     const totalBookings = await db.select({ count: count() }).from(bookings);
-    const totalUsers = await db.select({ count: count() }).from(users);
-    const totalRevenue = await db
-      .select({ total: sql<number>`COALESCE(SUM(${payments.amount}), 0)` })
-      .from(payments)
-      .where(eq(payments.status, "success"));
+    const totalUsers = await db.select({ count: count() }).from(accounts);
 
-    const recentBookings = await db.query.bookings.findMany({
-      with: {
-        user: true,
-        flight: {
-          with: {
-            route: {
-              with: {
-                departureAirport: true,
-                arrivalAirport: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: desc(bookings.createdAt),
-      limit: 10,
-    });
+    // Revenue from bookings via successful payments
+    const totalRevenue = await db
+      .select({
+        total: sql<number>`COALESCE(SUM(${bookings.totalAmount}), 0)`,
+      })
+      .from(payments)
+      .innerJoin(bookings, eq(payments.bookingID, bookings.bookingID))
+      .where(eq(payments.status, "paid"));
+
+    const recentBookings = await db
+      .select()
+      .from(bookings)
+      .orderBy(desc(bookings.createdAt))
+      .limit(10);
 
     return {
       totalFlights: totalFlights[0]?.count ?? 0,
@@ -64,24 +58,25 @@ export const adminRouter = createRouter({
     .query(async ({ input }) => {
       const db = getDb();
 
-      const conditions = [eq(payments.status, "success")];
+      const conditions = [eq(payments.status, "paid")];
       if (input.startDate) {
-        conditions.push(gte(payments.createdAt, new Date(input.startDate)));
+        conditions.push(gte(payments.payDate, new Date(input.startDate)));
       }
       if (input.endDate) {
-        conditions.push(lte(payments.createdAt, new Date(input.endDate)));
+        conditions.push(lte(payments.payDate, new Date(input.endDate)));
       }
 
       const revenue = await db
         .select({
-          date: sql<string>`DATE(${payments.createdAt})`,
-          total: sql<number>`COALESCE(SUM(${payments.amount}), 0)`,
+          date: sql<string>`DATE(${payments.payDate})`,
+          total: sql<number>`COALESCE(SUM(${bookings.totalAmount}), 0)`,
           count: count(),
         })
         .from(payments)
+        .innerJoin(bookings, eq(payments.bookingID, bookings.bookingID))
         .where(and(...conditions))
-        .groupBy(sql`DATE(${payments.createdAt})`)
-        .orderBy(sql`DATE(${payments.createdAt})`);
+        .groupBy(sql`DATE(${payments.payDate})`)
+        .orderBy(sql`DATE(${payments.payDate})`);
 
       return revenue;
     }),
@@ -103,21 +98,13 @@ export const adminRouter = createRouter({
         ? eq(flights.status, input.status as any)
         : undefined;
 
-      const flightList = await db.query.flights.findMany({
-        where,
-        with: {
-          route: {
-            with: {
-              departureAirport: true,
-              arrivalAirport: true,
-            },
-          },
-          aircraft: true,
-        },
-        orderBy: desc(flights.scheduledDeparture),
-        limit: input.limit,
-        offset,
-      });
+      const flightList = await db
+        .select()
+        .from(flights)
+        .where(where)
+        .orderBy(desc(flights.scheduledDeparture))
+        .limit(input.limit)
+        .offset(offset);
 
       return flightList;
     }),
@@ -125,45 +112,43 @@ export const adminRouter = createRouter({
   flightCreate: adminQuery
     .input(
       z.object({
-        flightNumber: z.string(),
-        routeId: z.number(),
-        aircraftId: z.number(),
+        routeID: z.string(),
+        aircraftID: z.string(),
         scheduledDeparture: z.string(),
         scheduledArrival: z.string(),
-        basePrice: z.number(),
-        economyPrice: z.number(),
-        premiumPrice: z.number().optional(),
-        businessPrice: z.number().optional(),
+        status: z
+          .enum([
+            "scheduled",
+            "boarding",
+            "departed",
+            "arrived",
+            "delayed",
+            "cancelled",
+          ])
+          .default("scheduled"),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = getDb();
 
-      const [{ id }] = await db
-        .insert(flights)
-        .values({
-          ...input,
-          scheduledDeparture: new Date(input.scheduledDeparture),
-          scheduledArrival: new Date(input.scheduledArrival),
-          basePrice: String(input.basePrice),
-          economyPrice: String(input.economyPrice),
-          premiumPrice: String(input.premiumPrice || input.economyPrice * 1.5),
-          businessPrice: String(
-            input.businessPrice || input.economyPrice * 2.5
-          ),
-          status: "scheduled",
-          createdBy: ctx.user.id,
-        })
-        .$returningId();
+      const flightID = crypto.randomUUID().slice(0, 10);
 
-      return { id };
+      await db.insert(flights).values({
+        flightID,
+        routeID: input.routeID,
+        aircraftID: input.aircraftID,
+        scheduledDeparture: new Date(input.scheduledDeparture),
+        scheduledArrival: new Date(input.scheduledArrival),
+        status: input.status,
+      });
+
+      return { id: flightID };
     }),
 
   flightUpdate: adminQuery
     .input(
       z.object({
-        id: z.number(),
-        flightNumber: z.string().optional(),
+        flightID: z.string(),
         scheduledDeparture: z.string().optional(),
         scheduledArrival: z.string().optional(),
         status: z
@@ -176,85 +161,73 @@ export const adminRouter = createRouter({
             "cancelled",
           ])
           .optional(),
-        gate: z.string().optional(),
-        terminal: z.string().optional(),
-        economyPrice: z.number().optional(),
-        premiumPrice: z.number().optional(),
-        businessPrice: z.number().optional(),
+        actualDeparture: z.string().optional(),
+        actualArrival: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
       const db = getDb();
-      const { id, ...data } = input;
+      const { flightID, ...data } = input;
 
       const updateData: any = {};
-      if (data.flightNumber) updateData.flightNumber = data.flightNumber;
       if (data.scheduledDeparture)
         updateData.scheduledDeparture = new Date(data.scheduledDeparture);
       if (data.scheduledArrival)
         updateData.scheduledArrival = new Date(data.scheduledArrival);
       if (data.status) updateData.status = data.status;
-      if (data.gate) updateData.gate = data.gate;
-      if (data.terminal) updateData.terminal = data.terminal;
-      if (data.economyPrice)
-        updateData.economyPrice = String(data.economyPrice);
-      if (data.premiumPrice)
-        updateData.premiumPrice = String(data.premiumPrice);
-      if (data.businessPrice)
-        updateData.businessPrice = String(data.businessPrice);
+      if (data.actualDeparture)
+        updateData.actualDeparture = new Date(data.actualDeparture);
+      if (data.actualArrival)
+        updateData.actualArrival = new Date(data.actualArrival);
 
-      await db.update(flights).set(updateData).where(eq(flights.id, id));
+      await db
+        .update(flights)
+        .set(updateData)
+        .where(eq(flights.flightID, flightID));
       return { success: true };
     }),
 
   // Airport management
   airportList: adminQuery.query(async () => {
     const db = getDb();
-    return db.query.airports.findMany({
-      orderBy: airports.code,
-    });
+    return db.select().from(airports).orderBy(airports.iataCode);
   }),
 
   airportCreate: adminQuery
     .input(
       z.object({
-        code: z.string(),
-        name: z.string(),
+        airportID: z.string(),
+        iataCode: z.string(),
         city: z.string(),
         country: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       const db = getDb();
-      const [{ id }] = await db.insert(airports).values(input).$returningId();
-      return { id };
+      await db.insert(airports).values(input);
+      return { id: input.airportID };
     }),
 
   // Aircraft management
   aircraftList: adminQuery.query(async () => {
     const db = getDb();
-    return db.query.aircraft.findMany({
-      orderBy: aircraft.registrationNumber,
-    });
+    return db.select().from(aircraft).orderBy(aircraft.model);
   }),
 
   aircraftCreate: adminQuery
     .input(
       z.object({
-        registrationNumber: z.string(),
+        aircraftID: z.string(),
         model: z.string(),
         manufacturer: z.string(),
-        totalSeats: z.number(),
-        economySeats: z.number(),
-        premiumSeats: z.number(),
-        businessSeats: z.number(),
+        capacity: z.number(),
         status: z.enum(["active", "maintenance", "retired"]).default("active"),
       })
     )
     .mutation(async ({ input }) => {
       const db = getDb();
-      const [{ id }] = await db.insert(aircraft).values(input).$returningId();
-      return { id };
+      await db.insert(aircraft).values(input);
+      return { id: input.aircraftID };
     }),
 
   // Booking management
@@ -274,25 +247,13 @@ export const adminRouter = createRouter({
         ? eq(bookings.status, input.status as any)
         : undefined;
 
-      return db.query.bookings.findMany({
-        where,
-        with: {
-          user: true,
-          flight: {
-            with: {
-              route: {
-                with: {
-                  departureAirport: true,
-                  arrivalAirport: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: desc(bookings.createdAt),
-        limit: input.limit,
-        offset,
-      });
+      return db
+        .select()
+        .from(bookings)
+        .where(where)
+        .orderBy(desc(bookings.createdAt))
+        .limit(input.limit)
+        .offset(offset);
     }),
 
   // Customer management
@@ -307,29 +268,23 @@ export const adminRouter = createRouter({
       const db = getDb();
       const offset = (input.page - 1) * input.limit;
 
-      return db.query.users.findMany({
-        orderBy: desc(users.createdAt),
-        limit: input.limit,
-        offset,
-      });
+      return db
+        .select()
+        .from(customers)
+        .orderBy(desc(customers.customerID))
+        .limit(input.limit)
+        .offset(offset);
     }),
 
   // Maintenance logs
   maintenanceList: adminQuery.query(async () => {
     const db = getDb();
-    return db.query.maintenanceLogs.findMany({
-      with: {
-        aircraft: true,
-      },
-      orderBy: desc(maintenanceLogs.scheduledDate),
-    });
+    return db.select().from(maintenance).orderBy(desc(maintenance.startDate));
   }),
 
   // Crew management
   crewList: adminQuery.query(async () => {
     const db = getDb();
-    return db.query.crewMembers.findMany({
-      orderBy: crewMembers.employeeCode,
-    });
+    return db.select().from(crew).orderBy(crew.crewID);
   }),
 });

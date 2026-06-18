@@ -8,7 +8,7 @@ import { Session } from "@contracts/constants";
 import { Errors } from "@contracts/errors";
 import { signSessionToken, verifySessionToken } from "./session";
 import { users as kimiUsers } from "./platform";
-import { findUserByUnionId, upsertUser } from "../queries/users";
+import { findAccountByUsername, createAccount } from "../queries/accounts.js";
 import type { TokenResponse } from "./types";
 
 async function exchangeAuthCode(
@@ -64,7 +64,7 @@ export async function authenticateRequest(headers: Headers) {
   if (!claim) {
     throw Errors.forbidden("Invalid authentication token.");
   }
-  const user = await findUserByUnionId(claim.unionId);
+  const user = await findAccountByUsername(claim.unionId);
   if (!user) {
     throw Errors.forbidden("User not found. Please re-login.");
   }
@@ -98,7 +98,7 @@ export function createOAuthCallbackHandler() {
         throw new Error("Failed to fetch user profile from Kimi Open");
       }
 
-      await upsertUser({
+      await createAccount({
         unionId: userId,
         name: userProfile.name,
         avatar: userProfile.avatar_url,

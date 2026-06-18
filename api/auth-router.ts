@@ -3,7 +3,7 @@ import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { signSessionToken } from "./auth/session";
-import { findUserByEmail, upsertUser } from "./queries/users";
+import { findAccountByUsername, createAccount } from "./queries/accounts";
 import { z } from "zod";
 import * as bcrypt from "bcryptjs";
 
@@ -11,21 +11,27 @@ export const authRouter = createRouter({
   me: authedQuery.query(opts => opts.ctx.user),
 
   login: publicQuery
-    .input(z.object({ email: z.string().email(), password: z.string() }))
+    .input(z.object({ 
+      username: z.string().min(1),
+      password: z.string().min(1) 
+    }))
     .mutation(async ({ input, ctx }) => {
-      const { email, password } = input;
+      const { username, password } = input;
 
-      const user = await findUserByEmail(email);
-      if (!user || !user.passwordHash) {
-        throw new Error("Invalid email or password");
+      const account = await findAccountByUsername(username);
+      if (!account || !account.password) {
+        throw new Error("Invalid username or password");
       }
 
-      const validPassword = await bcrypt.compare(password, user.passwordHash);
+      const validPassword = await bcrypt.compare(password, account.password);
       if (!validPassword) {
-        throw new Error("Invalid email or password");
+        throw new Error("Invalid username or password");
       }
 
-      const token = await signSessionToken({ userId: user.id.toString() });
+      const token = await signSessionToken({ 
+        accountID: account.accountID,
+        role: account.role 
+      });
       const opts = getSessionCookieOptions(ctx.req.headers);
 
       ctx.resHeaders.append(
@@ -39,35 +45,46 @@ export const authRouter = createRouter({
         })
       );
 
-      return { success: true, user };
+      return { 
+        success: true, 
+        user: {
+          accountID: account.accountID,
+          username: account.username,
+          role: account.role,
+        } 
+      };
     }),
 
   signup: publicQuery
     .input(
       z.object({
-        email: z.string().email(),
-        password: z.string().min(8),
+        username: z.string().min(1),
+        password: z.string().min(6),
         name: z.string().min(2),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const { email, password, name } = input;
+      const { username, password, name } = input;
 
-      const existing = await findUserByEmail(email);
+      const existing = await findAccountByUsername(username);
       if (existing) {
-        throw new Error("Email already registered");
+        throw new Error("Username already registered");
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await upsertUser({
-        email,
-        name,
-        passwordHash,
+      const account = await createAccount({
+        username,
+        password: passwordHash,
+        role: "customer",
+        status: "active",
       });
 
-      if (!user) throw new Error("Failed to create user");
+      if (!account) throw new Error("Failed to create account");
 
-      const token = await signSessionToken({ userId: user.id.toString() });
+      const token = await signSessionToken({ 
+        accountID: account.accountID,
+        role: account.role 
+      });
       const opts = getSessionCookieOptions(ctx.req.headers);
 
       ctx.resHeaders.append(
@@ -81,7 +98,14 @@ export const authRouter = createRouter({
         })
       );
 
-      return { success: true, user };
+      return { 
+        success: true, 
+        user: {
+          accountID: account.accountID,
+          username: account.username,
+          role: account.role,
+        } 
+      };
     }),
 
   logout: authedQuery.mutation(async ({ ctx }) => {

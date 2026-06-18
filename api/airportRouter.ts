@@ -2,15 +2,12 @@ import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { airports } from "@db/schema";
-import { eq, like, or, and } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 
 export const airportRouter = createRouter({
   list: publicQuery.query(async () => {
     const db = getDb();
-    return db.query.airports.findMany({
-      where: eq(airports.status, "active"),
-      orderBy: airports.code,
-    });
+    return db.select().from(airports).orderBy(airports.iataCode);
   }),
 
   search: publicQuery
@@ -18,34 +15,40 @@ export const airportRouter = createRouter({
     .query(async ({ input }) => {
       const db = getDb();
       const searchTerm = `%${input.query}%`;
-      return db.query.airports.findMany({
-        where: and(
-          eq(airports.status, "active"),
+      return db
+        .select()
+        .from(airports)
+        .where(
           or(
-            like(airports.code, searchTerm),
+            like(airports.iataCode, searchTerm),
             like(airports.city, searchTerm),
-            like(airports.name, searchTerm)
+            like(airports.airportID, searchTerm)
           )
-        ),
-        limit: 10,
-      });
+        )
+        .limit(10);
     }),
 
   byId: publicQuery
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const db = getDb();
-      return db.query.airports.findFirst({
-        where: eq(airports.id, input.id),
-      });
+      const result = await db
+        .select()
+        .from(airports)
+        .where(eq(airports.airportID, input.id))
+        .limit(1);
+      return result[0] || null;
     }),
 
   byCode: publicQuery
     .input(z.object({ code: z.string() }))
     .query(async ({ input }) => {
       const db = getDb();
-      return db.query.airports.findFirst({
-        where: eq(airports.code, input.code),
-      });
+      const result = await db
+        .select()
+        .from(airports)
+        .where(eq(airports.iataCode, input.code))
+        .limit(1);
+      return result[0] || null;
     }),
 });

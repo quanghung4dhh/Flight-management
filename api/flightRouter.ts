@@ -1,20 +1,20 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { flights, routes, seats, flightSeats } from "@db/schema";
+import { flights, routes, airports, aircraft, flightPricing } from "@db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 
 export const flightRouter = createRouter({
   search: publicQuery
     .input(
       z.object({
-        departureAirportId: z.number(),
-        arrivalAirportId: z.number(),
-        departureDate: z.string(), // ISO date string
+        departureAirportId: z.string(), // ← Đổi sang string
+        arrivalAirportId: z.string(), // ← Đổi sang string
+        departureDate: z.string(),
         seatClass: z
-          .enum(["economy", "premium", "business"])
+          .enum(["ECO", "BUS", "FST"]) // ← Đổi theo schema mới
           .optional()
-          .default("economy"),
+          .default("ECO"),
         passengers: z.number().min(1).max(9).optional().default(1),
       })
     )
@@ -25,102 +25,71 @@ export const flightRouter = createRouter({
       const endOfDay = new Date(input.departureDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      // Find the route first
-      const route = await db.query.routes.findFirst({
-        where: and(
-          eq(routes.departureAirportId, input.departureAirportId),
-          eq(routes.arrivalAirportId, input.arrivalAirportId),
-          eq(routes.status, "active")
-        ),
-      });
+      // Find route
+      const routeResult = await db
+        .select()
+        .from(routes)
+        .where(
+          and(
+            eq(routes.departureAirportID, input.departureAirportId),
+            eq(routes.arrivalAirportID, input.arrivalAirportId)
+          )
+        )
+        .limit(1);
 
-      if (!route) {
+      if (routeResult.length === 0) {
         return { flights: [], route: null };
       }
 
-      // Find flights for this route on the given date
-      const flightList = await db.query.flights.findMany({
-        where: and(
-          eq(flights.routeId, route.id),
-          gte(flights.scheduledDeparture, startOfDay),
-          lte(flights.scheduledDeparture, endOfDay),
-          eq(flights.status, "scheduled")
-        ),
-        with: {
-          route: {
-            with: {
-              departureAirport: true,
-              arrivalAirport: true,
-            },
-          },
-          aircraft: true,
-        },
-        orderBy: flights.scheduledDeparture,
-      });
+      const route = routeResult[0];
 
-      // Get available seat count for each flight
-      const flightsWithAvailability = await Promise.all(
+      // Find flights
+      const flightList = await db
+        .select()
+        .from(flights)
+        .where(
+          and(
+            eq(flights.routeID, route.routeID),
+            gte(flights.scheduledDeparture, startOfDay),
+            lte(flights.scheduledDeparture, endOfDay),
+            eq(flights.status, "scheduled")
+          )
+        )
+        .orderBy(flights.scheduledDeparture);
+
+      // Get pricing for each flight
+      const flightsWithPricing = await Promise.all(
         flightList.map(async flight => {
-          const availableSeats = await db.query.flightSeats.findMany({
-            where: and(
-              eq(flightSeats.flightId, flight.id),
-              eq(flightSeats.status, "available")
-            ),
-            with: {
-              seat: true,
-            },
-          });
-
-          const classSeats = availableSeats.filter(
-            fs => fs.seat?.seatClass === input.seatClass
-          );
+          const pricing = await db
+            .select()
+            .from(flightPricing)
+            .where(
+              and(
+                eq(flightPricing.flightID, flight.flightID),
+                eq(flightPricing.seatClassID, input.seatClass)
+              )
+            )
+            .limit(1);
 
           return {
             ...flight,
-            availableSeats: classSeats.length,
-            price:
-              input.seatClass === "business"
-                ? flight.businessPrice
-                : input.seatClass === "premium"
-                  ? flight.premiumPrice
-                  : flight.economyPrice,
+            basePrice: pricing[0]?.basePrice || "0",
           };
         })
       );
 
-      return { flights: flightsWithAvailability, route };
+      return { flights: flightsWithPricing, route };
     }),
 
   byId: publicQuery
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() })) // ← Đổi sang string
     .query(async ({ input }) => {
       const db = getDb();
-      return db.query.flights.findFirst({
-        where: eq(flights.id, input.id),
-        with: {
-          route: {
-            with: {
-              departureAirport: true,
-              arrivalAirport: true,
-            },
-          },
-          aircraft: true,
-        },
-      });
-    }),
-
-  seatMap: publicQuery
-    .input(z.object({ flightId: z.number() }))
-    .query(async ({ input }) => {
-      const db = getDb();
-      const seatList = await db.query.flightSeats.findMany({
-        where: eq(flightSeats.flightId, input.flightId),
-        with: {
-          seat: true,
-        },
-        orderBy: [seats.seatMapRow, seats.seatMapCol],
-      });
-
-      return seatList;
+      const result = await db
+        .select()
+        .from(flights)
+        .where(eq(flights.flightID, input.id))
+        .limit(1);
+      return result[0] || null;
     }),
 });

@@ -7,7 +7,6 @@ export const seedRouter = createRouter({
     const db = getDb();
 
     try {
-      // Check if data already exists
       const existingAirports = await db.select().from(schema.airports).limit(1);
       if (existingAirports.length > 0) {
         return { message: "Data already seeded" };
@@ -16,183 +15,144 @@ export const seedRouter = createRouter({
       // Seed airports
       await db.insert(schema.airports).values([
         {
-          code: "SGN",
-          name: "Tan Son Nhat International Airport",
+          airportID: "AP-SGN",
+          iataCode: "SGN",
           city: "Ho Chi Minh City",
           country: "Vietnam",
-          latitude: "10.81880",
-          longitude: "106.65190",
-          timezone: "Asia/Ho_Chi_Minh",
         },
         {
-          code: "HAN",
-          name: "Noi Bai International Airport",
+          airportID: "AP-HAN",
+          iataCode: "HAN",
           city: "Hanoi",
           country: "Vietnam",
-          latitude: "21.22120",
-          longitude: "105.80700",
-          timezone: "Asia/Ho_Chi_Minh",
         },
         {
-          code: "DAD",
-          name: "Da Nang International Airport",
+          airportID: "AP-DAD",
+          iataCode: "DAD",
           city: "Da Nang",
           country: "Vietnam",
-          latitude: "16.04390",
-          longitude: "108.19940",
-          timezone: "Asia/Ho_Chi_Minh",
         },
         {
-          code: "CXR",
-          name: "Cam Ranh International Airport",
+          airportID: "AP-CXR",
+          iataCode: "CXR",
           city: "Nha Trang",
           country: "Vietnam",
-          latitude: "11.99820",
-          longitude: "109.21940",
-          timezone: "Asia/Ho_Chi_Minh",
         },
         {
-          code: "PQC",
-          name: "Phu Quoc International Airport",
+          airportID: "AP-PQC",
+          iataCode: "PQC",
           city: "Phu Quoc",
           country: "Vietnam",
-          latitude: "10.22700",
-          longitude: "103.96770",
-          timezone: "Asia/Ho_Chi_Minh",
         },
         {
-          code: "BKK",
-          name: "Suvarnabhumi Airport",
+          airportID: "AP-BKK",
+          iataCode: "BKK",
           city: "Bangkok",
           country: "Thailand",
-          latitude: "13.69000",
-          longitude: "100.75010",
-          timezone: "Asia/Bangkok",
         },
         {
-          code: "SIN",
-          name: "Changi Airport",
+          airportID: "AP-SIN",
+          iataCode: "SIN",
           city: "Singapore",
           country: "Singapore",
-          latitude: "1.36440",
-          longitude: "103.99150",
-          timezone: "Asia/Singapore",
         },
       ] as (typeof schema.airports.$inferInsert)[]);
 
       // Seed aircraft
       await db.insert(schema.aircraft).values([
         {
-          registrationNumber: "VN-A321",
+          aircraftID: "AC-001",
           model: "Airbus A321neo",
           manufacturer: "Airbus",
-          totalSeats: 24,
-          economySeats: 16,
-          premiumSeats: 4,
-          businessSeats: 4,
-          manufactureDate: "2020-03-15",
+          capacity: 200,
           status: "active",
         },
         {
-          registrationNumber: "VN-A320",
+          aircraftID: "AC-002",
           model: "Airbus A320neo",
           manufacturer: "Airbus",
-          totalSeats: 24,
-          economySeats: 16,
-          premiumSeats: 4,
-          businessSeats: 4,
-          manufactureDate: "2019-06-20",
+          capacity: 180,
           status: "active",
         },
         {
-          registrationNumber: "VN-B787",
+          aircraftID: "AC-003",
           model: "Boeing 787-9",
           manufacturer: "Boeing",
-          totalSeats: 24,
-          economySeats: 16,
-          premiumSeats: 4,
-          businessSeats: 4,
-          manufactureDate: "2021-01-10",
+          capacity: 290,
           status: "active",
         },
-      ] as any);
+      ] as (typeof schema.aircraft.$inferInsert)[]);
 
       // Seed routes
       await db.insert(schema.routes).values([
         {
-          departureAirportId: 1,
-          arrivalAirportId: 2,
-          distanceKm: 1060,
-          estimatedDurationMinutes: 135,
-          status: "active",
+          routeID: "RT-001",
+          departureAirportID: "AP-SGN",
+          arrivalAirportID: "AP-HAN",
+          distance: 1060,
+          duration: 135,
         },
         {
-          departureAirportId: 2,
-          arrivalAirportId: 1,
-          distanceKm: 1060,
-          estimatedDurationMinutes: 135,
-          status: "active",
+          routeID: "RT-002",
+          departureAirportID: "AP-HAN",
+          arrivalAirportID: "AP-SGN",
+          distance: 1060,
+          duration: 135,
         },
         {
-          departureAirportId: 1,
-          arrivalAirportId: 3,
-          distanceKm: 605,
-          estimatedDurationMinutes: 85,
-          status: "active",
+          routeID: "RT-003",
+          departureAirportID: "AP-SGN",
+          arrivalAirportID: "AP-DAD",
+          distance: 605,
+          duration: 85,
         },
         {
-          departureAirportId: 3,
-          arrivalAirportId: 1,
-          distanceKm: 605,
-          estimatedDurationMinutes: 85,
-          status: "active",
+          routeID: "RT-004",
+          departureAirportID: "AP-DAD",
+          arrivalAirportID: "AP-SGN",
+          distance: 605,
+          duration: 85,
         },
         {
-          departureAirportId: 2,
-          arrivalAirportId: 3,
-          distanceKm: 627,
-          estimatedDurationMinutes: 90,
-          status: "active",
+          routeID: "RT-005",
+          departureAirportID: "AP-HAN",
+          arrivalAirportID: "AP-DAD",
+          distance: 627,
+          duration: 90,
         },
         {
-          departureAirportId: 1,
-          arrivalAirportId: 4,
-          distanceKm: 311,
-          estimatedDurationMinutes: 55,
-          status: "active",
+          routeID: "RT-006",
+          departureAirportID: "AP-SGN",
+          arrivalAirportID: "AP-CXR",
+          distance: 311,
+          duration: 55,
         },
       ] as (typeof schema.routes.$inferInsert)[]);
 
+      // Seed seat classes
+      await db.insert(schema.seatClass).values([
+        { seatClassID: "ECO", name: "Economy" },
+        { seatClassID: "BUS", name: "Business" },
+        { seatClassID: "FST", name: "First Class" },
+      ] as (typeof schema.seatClass.$inferInsert)[]);
+
       // Seed seats
       const colLetters = ["A", "B", "C", "D", "E", "F"];
-      for (let acId = 1; acId <= 3; acId++) {
+      const aircraftList = await db.select().from(schema.aircraft);
+
+      for (const ac of aircraftList) {
         const seatData = [];
         for (let row = 1; row <= 4; row++) {
           for (let col = 0; col < 6; col++) {
-            let seatClass: "economy" | "premium" | "business" = "economy";
-            if (row === 1) seatClass = "business";
-            else if (row === 2) seatClass = "premium";
-
-            const seatType: "window" | "aisle" | "middle" =
-              col === 0 || col === 5
-                ? "window"
-                : col === 2 || col === 3
-                  ? "aisle"
-                  : "middle";
+            let seatClassID = "ECO";
+            if (row === 1) seatClassID = "BUS";
+            else if (row === 2) seatClassID = "FST";
 
             seatData.push({
-              aircraftId: acId,
+              seatID: `ST-${ac.aircraftID}-${row}${colLetters[col]}`,
+              aircraftID: ac.aircraftID,
+              seatClassID,
               seatNumber: `${row}${colLetters[col]}`,
-              seatClass,
-              seatType,
-              extraPrice:
-                seatClass === "business"
-                  ? "50"
-                  : seatClass === "premium"
-                    ? "25"
-                    : "0",
-              seatMapRow: row,
-              seatMapCol: col + 1,
             });
           }
         }
@@ -204,39 +164,32 @@ export const seedRouter = createRouter({
       // Seed flights
       const now = new Date();
       const flightsData = [];
+      const routesList = await db.select().from(schema.routes);
+
       for (let day = 0; day < 3; day++) {
         const date = new Date(now);
         date.setDate(date.getDate() + day);
-        for (let r = 0; r < 6; r++) {
-          const routeId = r + 1;
-          const acId = ((day * 6 + r) % 3) + 1;
+
+        for (let r = 0; r < routesList.length; r++) {
+          const route = routesList[r];
+          const ac = aircraftList[r % aircraftList.length];
           const depHour = 7 + (r % 3) * 5;
 
           const scheduledDeparture = new Date(date);
           scheduledDeparture.setHours(depHour, 0, 0, 0);
 
-          const routeDurations = [135, 135, 85, 85, 90, 55];
-          const distances = [1060, 1060, 605, 605, 627, 311];
           const scheduledArrival = new Date(scheduledDeparture);
           scheduledArrival.setMinutes(
-            scheduledArrival.getMinutes() + routeDurations[r]
+            scheduledArrival.getMinutes() + (route.duration || 90)
           );
 
-          const basePrice = Math.floor(distances[r] * 1.5);
-
           flightsData.push({
-            flightNumber: `VN${101 + day * 6 + r}`,
-            routeId,
-            aircraftId: acId,
+            flightID: `FL-${day}-${r}`,
+            routeID: route.routeID,
+            aircraftID: ac.aircraftID,
             scheduledDeparture,
             scheduledArrival,
             status: "scheduled" as const,
-            gate: `${String.fromCharCode(65 + (r % 4))}${(day % 5) + 1}`,
-            terminal: "1",
-            basePrice: String(basePrice),
-            economyPrice: String(basePrice),
-            premiumPrice: String(Math.floor(basePrice * 1.5)),
-            businessPrice: String(Math.floor(basePrice * 2.5)),
           });
         }
       }
@@ -244,104 +197,103 @@ export const seedRouter = createRouter({
         .insert(schema.flights)
         .values(flightsData as (typeof schema.flights.$inferInsert)[]);
 
-      // Create flight seats
+      // Seed flight pricing
       const allFlights = await db.select().from(schema.flights);
-      const allSeats = await db.select().from(schema.seats);
+      const seatClasses = await db.select().from(schema.seatClass);
 
       for (const flight of allFlights) {
-        const aircraftSeats = allSeats.filter(
-          s => s.aircraftId === flight.aircraftId
-        );
-        if (aircraftSeats.length > 0) {
-          const flightSeatData = aircraftSeats.map(seat => ({
-            flightId: flight.id,
-            seatId: seat.id,
-            status: "available" as const,
-          }));
-          await db
-            .insert(schema.flightSeats)
-            .values(
-              flightSeatData as (typeof schema.flightSeats.$inferInsert)[]
-            );
+        const route = routesList.find(r => r.routeID === flight.routeID);
+        const basePrice = Math.floor((route?.distance || 500) * 1.5);
+
+        for (const sc of seatClasses) {
+          let multiplier = 1;
+          if (sc.seatClassID === "BUS") multiplier = 2.5;
+          if (sc.seatClassID === "FST") multiplier = 4;
+
+          await db.insert(schema.flightPricing).values({
+            pricingID: `PR-${flight.flightID}-${sc.seatClassID}`,
+            flightID: flight.flightID,
+            seatClassID: sc.seatClassID,
+            basePrice: String(Math.floor(basePrice * multiplier)),
+          } as typeof schema.flightPricing.$inferInsert);
         }
       }
 
-      // Seed crew members
-      await db.insert(schema.crewMembers).values([
+      // Seed crew
+      await db.insert(schema.crew).values([
         {
-          employeeCode: "CREW001",
-          position: "captain" as const,
+          crewID: "CR-001",
+          name: "Nguyen Van A",
+          role: "captain",
           licenseNumber: "VNCPL-001",
-          totalFlyingHours: 8500,
-          status: "active" as const,
-          hiredDate: "2015-01-15",
+          status: "active",
         },
         {
-          employeeCode: "CREW002",
-          position: "first_officer" as const,
+          crewID: "CR-002",
+          name: "Tran Van B",
+          role: "first_officer",
           licenseNumber: "VNFO-001",
-          totalFlyingHours: 4200,
-          status: "active" as const,
-          hiredDate: "2019-06-10",
+          status: "active",
         },
         {
-          employeeCode: "CREW003",
-          position: "flight_attendant" as const,
+          crewID: "CR-003",
+          name: "Le Thi C",
+          role: "flight_attendant",
           licenseNumber: "VNFA-001",
-          totalFlyingHours: 2800,
-          status: "active" as const,
-          hiredDate: "2018-02-14",
+          status: "active",
         },
-      ] as any);
+      ] as (typeof schema.crew.$inferInsert)[]);
 
-      // Assign crew to flights
+      // Seed flight crew assignments
+      const crewList = await db.select().from(schema.crew);
       for (let f = 0; f < Math.min(6, allFlights.length); f++) {
         await db.insert(schema.flightCrew).values([
           {
-            flightId: allFlights[f].id,
-            crewMemberId: 1,
-            roleOnFlight: "captain" as const,
+            flightCrewID: `FC-${f}-1`,
+            flightID: allFlights[f].flightID,
+            crewID: crewList[0].crewID,
+            assignmentRole: "captain",
           },
           {
-            flightId: allFlights[f].id,
-            crewMemberId: 2,
-            roleOnFlight: "first_officer" as const,
+            flightCrewID: `FC-${f}-2`,
+            flightID: allFlights[f].flightID,
+            crewID: crewList[1].crewID,
+            assignmentRole: "first_officer",
           },
           {
-            flightId: allFlights[f].id,
-            crewMemberId: 3,
-            roleOnFlight: "lead_attendant" as const,
+            flightCrewID: `FC-${f}-3`,
+            flightID: allFlights[f].flightID,
+            crewID: crewList[2].crewID,
+            assignmentRole: "lead_attendant",
           },
         ] as (typeof schema.flightCrew.$inferInsert)[]);
       }
 
-      // Seed maintenance logs
-      await db.insert(schema.maintenanceLogs).values([
+      // Seed maintenance
+      await db.insert(schema.maintenance).values([
         {
-          aircraftId: 1,
-          maintenanceType: "routine" as const,
+          maintenanceID: "MN-001",
+          aircraftID: "AC-001",
           description: "Regular 500-hour inspection",
-          scheduledDate: "2026-05-20",
-          status: "scheduled" as const,
-          notes: "Standard maintenance cycle",
+          startDate: new Date("2026-05-20"),
+          status: "scheduled",
         },
         {
-          aircraftId: 2,
-          maintenanceType: "inspection" as const,
+          maintenanceID: "MN-002",
+          aircraftID: "AC-002",
           description: "Annual airworthiness inspection",
-          scheduledDate: "2026-05-25",
-          status: "scheduled" as const,
-          notes: "Required by aviation authority",
+          startDate: new Date("2026-05-25"),
+          status: "scheduled",
         },
         {
-          aircraftId: 3,
-          maintenanceType: "repair" as const,
+          maintenanceID: "MN-003",
+          aircraftID: "AC-003",
           description: "Replace hydraulic pump system",
-          scheduledDate: "2026-05-18",
-          status: "in_progress" as const,
-          notes: "Emergency repair priority",
+          startDate: new Date("2026-05-18"),
+          stopDate: new Date("2026-05-22"),
+          status: "completed",
         },
-      ] as any);
+      ] as (typeof schema.maintenance.$inferInsert)[]);
 
       return { message: "Seed data inserted successfully" };
     } catch (error: any) {
