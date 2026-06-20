@@ -62,16 +62,12 @@
       "indexes": {
         "idx_account_username": {
           "name": "idx_account_username",
-          "columns": [
-            "Username"
-          ],
+          "columns": ["Username"],
           "isUnique": false
         },
         "idx_account_role": {
           "name": "idx_account_role",
-          "columns": [
-            "Role"
-          ],
+          "columns": ["Role"],
           "isUnique": false
         }
       },
@@ -79,17 +75,13 @@
       "compositePrimaryKeys": {
         "Accounts_AccountID": {
           "name": "Accounts_AccountID",
-          "columns": [
-            "AccountID"
-          ]
+          "columns": ["AccountID"]
         }
       },
       "uniqueConstraints": {
         "Accounts_Username_unique": {
           "name": "Accounts_Username_unique",
-          "columns": [
-            "Username"
-          ]
+          "columns": ["Username"]
         }
       },
       "checkConstraint": {}
@@ -136,9 +128,7 @@
       "indexes": {
         "idx_aircraft_status": {
           "name": "idx_aircraft_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -146,9 +136,7 @@
       "compositePrimaryKeys": {
         "Aircraft_AircraftID": {
           "name": "Aircraft_AircraftID",
-          "columns": [
-            "AircraftID"
-          ]
+          "columns": ["AircraftID"]
         }
       },
       "uniqueConstraints": {},
@@ -189,16 +177,12 @@
       "indexes": {
         "idx_airport_iata": {
           "name": "idx_airport_iata",
-          "columns": [
-            "IATACode"
-          ],
+          "columns": ["IATACode"],
           "isUnique": false
         },
         "idx_airport_city": {
           "name": "idx_airport_city",
-          "columns": [
-            "City"
-          ],
+          "columns": ["City"],
           "isUnique": false
         }
       },
@@ -206,17 +190,13 @@
       "compositePrimaryKeys": {
         "Airport_AirportID": {
           "name": "Airport_AirportID",
-          "columns": [
-            "AirportID"
-          ]
+          "columns": ["AirportID"]
         }
       },
       "uniqueConstraints": {
         "Airport_IATACode_unique": {
           "name": "Airport_IATACode_unique",
-          "columns": [
-            "IATACode"
-          ]
+          "columns": ["IATACode"]
         }
       },
       "checkConstraint": {}
@@ -256,9 +236,7 @@
       "indexes": {
         "idx_baggage_ticket": {
           "name": "idx_baggage_ticket",
-          "columns": [
-            "TicketID"
-          ],
+          "columns": ["TicketID"],
           "isUnique": false
         }
       },
@@ -267,12 +245,8 @@
           "name": "Baggage_TicketID_Ticket_TicketID_fk",
           "tableFrom": "Baggage",
           "tableTo": "Ticket",
-          "columnsFrom": [
-            "TicketID"
-          ],
-          "columnsTo": [
-            "TicketID"
-          ],
+          "columnsFrom": ["TicketID"],
+          "columnsTo": ["TicketID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -280,9 +254,7 @@
       "compositePrimaryKeys": {
         "Baggage_BaggageID": {
           "name": "Baggage_BaggageID",
-          "columns": [
-            "BaggageID"
-          ]
+          "columns": ["BaggageID"]
         }
       },
       "uniqueConstraints": {},
@@ -346,16 +318,12 @@
       "indexes": {
         "idx_booking_customer": {
           "name": "idx_booking_customer",
-          "columns": [
-            "CustomerID"
-          ],
+          "columns": ["CustomerID"],
           "isUnique": false
         },
         "idx_booking_status": {
           "name": "idx_booking_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -364,12 +332,8 @@
           "name": "Booking_CustomerID_Customers_CustomerID_fk",
           "tableFrom": "Booking",
           "tableTo": "Customers",
-          "columnsFrom": [
-            "CustomerID"
-          ],
-          "columnsTo": [
-            "CustomerID"
-          ],
+          "columnsFrom": ["CustomerID"],
+          "columnsTo": ["CustomerID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -377,9 +341,7 @@
       "compositePrimaryKeys": {
         "Booking_BookingID": {
           "name": "Booking_BookingID",
-          "columns": [
-            "BookingID"
-          ]
+          "columns": ["BookingID"]
         }
       },
       "uniqueConstraints": {},
@@ -429,9 +391,7 @@
       "compositePrimaryKeys": {
         "Crew_CrewID": {
           "name": "Crew_CrewID",
-          "columns": [
-            "CrewID"
-          ]
+          "columns": ["CrewID"]
         }
       },
       "uniqueConstraints": {},
@@ -500,16 +460,12 @@
       "indexes": {
         "idx_customer_account": {
           "name": "idx_customer_account",
-          "columns": [
-            "AccountID"
-          ],
+          "columns": ["AccountID"],
           "isUnique": false
         },
         "idx_customer_email": {
           "name": "idx_customer_email",
-          "columns": [
-            "Email"
-          ],
+          "columns": ["Email"],
           "isUnique": false
         }
       },
@@ -518,12 +474,8 @@
           "name": "Customers_AccountID_Accounts_AccountID_fk",
           "tableFrom": "Customers",
           "tableTo": "Accounts",
-          "columnsFrom": [
-            "AccountID"
-          ],
-          "columnsTo": [
-            "AccountID"
-          ],
+          "columnsFrom": ["AccountID"],
+          "columnsTo": ["AccountID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -531,9 +483,7 @@
       "compositePrimaryKeys": {
         "Customers_CustomerID": {
           "name": "Customers_CustomerID",
-          "columns": [
-            "CustomerID"
-          ]
+          "columns": ["CustomerID"]
         }
       },
       "uniqueConstraints": {},
@@ -574,16 +524,12 @@
       "indexes": {
         "idx_flight_crew_flight": {
           "name": "idx_flight_crew_flight",
-          "columns": [
-            "FlightID"
-          ],
+          "columns": ["FlightID"],
           "isUnique": false
         },
         "idx_flight_crew_crew": {
           "name": "idx_flight_crew_crew",
-          "columns": [
-            "CrewID"
-          ],
+          "columns": ["CrewID"],
           "isUnique": false
         }
       },
@@ -592,12 +538,8 @@
           "name": "FlightCrew_FlightID_Flight_FlightID_fk",
           "tableFrom": "FlightCrew",
           "tableTo": "Flight",
-          "columnsFrom": [
-            "FlightID"
-          ],
-          "columnsTo": [
-            "FlightID"
-          ],
+          "columnsFrom": ["FlightID"],
+          "columnsTo": ["FlightID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -605,12 +547,8 @@
           "name": "FlightCrew_CrewID_Crew_CrewID_fk",
           "tableFrom": "FlightCrew",
           "tableTo": "Crew",
-          "columnsFrom": [
-            "CrewID"
-          ],
-          "columnsTo": [
-            "CrewID"
-          ],
+          "columnsFrom": ["CrewID"],
+          "columnsTo": ["CrewID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -618,9 +556,7 @@
       "compositePrimaryKeys": {
         "FlightCrew_FlightCrewID": {
           "name": "FlightCrew_FlightCrewID",
-          "columns": [
-            "FlightCrewID"
-          ]
+          "columns": ["FlightCrewID"]
         }
       },
       "uniqueConstraints": {},
@@ -661,16 +597,12 @@
       "indexes": {
         "idx_pricing_flight": {
           "name": "idx_pricing_flight",
-          "columns": [
-            "FlightID"
-          ],
+          "columns": ["FlightID"],
           "isUnique": false
         },
         "idx_pricing_class": {
           "name": "idx_pricing_class",
-          "columns": [
-            "SeatClassID"
-          ],
+          "columns": ["SeatClassID"],
           "isUnique": false
         }
       },
@@ -679,12 +611,8 @@
           "name": "FlightPricing_FlightID_Flight_FlightID_fk",
           "tableFrom": "FlightPricing",
           "tableTo": "Flight",
-          "columnsFrom": [
-            "FlightID"
-          ],
-          "columnsTo": [
-            "FlightID"
-          ],
+          "columnsFrom": ["FlightID"],
+          "columnsTo": ["FlightID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -692,12 +620,8 @@
           "name": "FlightPricing_SeatClassID_SeatClass_SeatClassID_fk",
           "tableFrom": "FlightPricing",
           "tableTo": "SeatClass",
-          "columnsFrom": [
-            "SeatClassID"
-          ],
-          "columnsTo": [
-            "SeatClassID"
-          ],
+          "columnsFrom": ["SeatClassID"],
+          "columnsTo": ["SeatClassID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -705,9 +629,7 @@
       "compositePrimaryKeys": {
         "FlightPricing_PricingID": {
           "name": "FlightPricing_PricingID",
-          "columns": [
-            "PricingID"
-          ]
+          "columns": ["PricingID"]
         }
       },
       "uniqueConstraints": {},
@@ -792,30 +714,22 @@
       "indexes": {
         "idx_flight_route": {
           "name": "idx_flight_route",
-          "columns": [
-            "RouteID"
-          ],
+          "columns": ["RouteID"],
           "isUnique": false
         },
         "idx_flight_aircraft": {
           "name": "idx_flight_aircraft",
-          "columns": [
-            "AircraftID"
-          ],
+          "columns": ["AircraftID"],
           "isUnique": false
         },
         "idx_flight_departure": {
           "name": "idx_flight_departure",
-          "columns": [
-            "ScheduledDeparture"
-          ],
+          "columns": ["ScheduledDeparture"],
           "isUnique": false
         },
         "idx_flight_status": {
           "name": "idx_flight_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -824,12 +738,8 @@
           "name": "Flight_RouteID_Route_RouteID_fk",
           "tableFrom": "Flight",
           "tableTo": "Route",
-          "columnsFrom": [
-            "RouteID"
-          ],
-          "columnsTo": [
-            "RouteID"
-          ],
+          "columnsFrom": ["RouteID"],
+          "columnsTo": ["RouteID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -837,12 +747,8 @@
           "name": "Flight_AircraftID_Aircraft_AircraftID_fk",
           "tableFrom": "Flight",
           "tableTo": "Aircraft",
-          "columnsFrom": [
-            "AircraftID"
-          ],
-          "columnsTo": [
-            "AircraftID"
-          ],
+          "columnsFrom": ["AircraftID"],
+          "columnsTo": ["AircraftID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -850,9 +756,7 @@
       "compositePrimaryKeys": {
         "Flight_FlightID": {
           "name": "Flight_FlightID",
-          "columns": [
-            "FlightID"
-          ]
+          "columns": ["FlightID"]
         }
       },
       "uniqueConstraints": {},
@@ -907,16 +811,12 @@
       "indexes": {
         "idx_maintenance_aircraft": {
           "name": "idx_maintenance_aircraft",
-          "columns": [
-            "AircraftID"
-          ],
+          "columns": ["AircraftID"],
           "isUnique": false
         },
         "idx_maintenance_status": {
           "name": "idx_maintenance_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -925,12 +825,8 @@
           "name": "Maintenance_AircraftID_Aircraft_AircraftID_fk",
           "tableFrom": "Maintenance",
           "tableTo": "Aircraft",
-          "columnsFrom": [
-            "AircraftID"
-          ],
-          "columnsTo": [
-            "AircraftID"
-          ],
+          "columnsFrom": ["AircraftID"],
+          "columnsTo": ["AircraftID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -938,9 +834,7 @@
       "compositePrimaryKeys": {
         "Maintenance_MaintenanceID": {
           "name": "Maintenance_MaintenanceID",
-          "columns": [
-            "MaintenanceID"
-          ]
+          "columns": ["MaintenanceID"]
         }
       },
       "uniqueConstraints": {},
@@ -995,16 +889,12 @@
       "indexes": {
         "idx_notification_account": {
           "name": "idx_notification_account",
-          "columns": [
-            "AccountID"
-          ],
+          "columns": ["AccountID"],
           "isUnique": false
         },
         "idx_notification_status": {
           "name": "idx_notification_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -1013,12 +903,8 @@
           "name": "Notification_AccountID_Accounts_AccountID_fk",
           "tableFrom": "Notification",
           "tableTo": "Accounts",
-          "columnsFrom": [
-            "AccountID"
-          ],
-          "columnsTo": [
-            "AccountID"
-          ],
+          "columnsFrom": ["AccountID"],
+          "columnsTo": ["AccountID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1026,9 +912,7 @@
       "compositePrimaryKeys": {
         "Notification_NotificationID": {
           "name": "Notification_NotificationID",
-          "columns": [
-            "NotificationID"
-          ]
+          "columns": ["NotificationID"]
         }
       },
       "uniqueConstraints": {},
@@ -1099,16 +983,12 @@
       "indexes": {
         "idx_payment_booking": {
           "name": "idx_payment_booking",
-          "columns": [
-            "BookingID"
-          ],
+          "columns": ["BookingID"],
           "isUnique": false
         },
         "idx_payment_status": {
           "name": "idx_payment_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -1117,12 +997,8 @@
           "name": "Payment_BookingID_Booking_BookingID_fk",
           "tableFrom": "Payment",
           "tableTo": "Booking",
-          "columnsFrom": [
-            "BookingID"
-          ],
-          "columnsTo": [
-            "BookingID"
-          ],
+          "columnsFrom": ["BookingID"],
+          "columnsTo": ["BookingID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1130,9 +1006,7 @@
       "compositePrimaryKeys": {
         "Payment_PaymentID": {
           "name": "Payment_PaymentID",
-          "columns": [
-            "PaymentID"
-          ]
+          "columns": ["PaymentID"]
         }
       },
       "uniqueConstraints": {},
@@ -1180,16 +1054,12 @@
       "indexes": {
         "idx_route_departure": {
           "name": "idx_route_departure",
-          "columns": [
-            "DepartureAirportID"
-          ],
+          "columns": ["DepartureAirportID"],
           "isUnique": false
         },
         "idx_route_arrival": {
           "name": "idx_route_arrival",
-          "columns": [
-            "ArrivalAirportID"
-          ],
+          "columns": ["ArrivalAirportID"],
           "isUnique": false
         }
       },
@@ -1198,12 +1068,8 @@
           "name": "Route_DepartureAirportID_Airport_AirportID_fk",
           "tableFrom": "Route",
           "tableTo": "Airport",
-          "columnsFrom": [
-            "DepartureAirportID"
-          ],
-          "columnsTo": [
-            "AirportID"
-          ],
+          "columnsFrom": ["DepartureAirportID"],
+          "columnsTo": ["AirportID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1211,12 +1077,8 @@
           "name": "Route_ArrivalAirportID_Airport_AirportID_fk",
           "tableFrom": "Route",
           "tableTo": "Airport",
-          "columnsFrom": [
-            "ArrivalAirportID"
-          ],
-          "columnsTo": [
-            "AirportID"
-          ],
+          "columnsFrom": ["ArrivalAirportID"],
+          "columnsTo": ["AirportID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1224,9 +1086,7 @@
       "compositePrimaryKeys": {
         "Route_RouteID": {
           "name": "Route_RouteID",
-          "columns": [
-            "RouteID"
-          ]
+          "columns": ["RouteID"]
         }
       },
       "uniqueConstraints": {},
@@ -1255,9 +1115,7 @@
       "compositePrimaryKeys": {
         "SeatClass_SeatClassID": {
           "name": "SeatClass_SeatClassID",
-          "columns": [
-            "SeatClassID"
-          ]
+          "columns": ["SeatClassID"]
         }
       },
       "uniqueConstraints": {},
@@ -1298,16 +1156,12 @@
       "indexes": {
         "idx_seat_aircraft": {
           "name": "idx_seat_aircraft",
-          "columns": [
-            "AircraftID"
-          ],
+          "columns": ["AircraftID"],
           "isUnique": false
         },
         "idx_seat_class": {
           "name": "idx_seat_class",
-          "columns": [
-            "SeatClassID"
-          ],
+          "columns": ["SeatClassID"],
           "isUnique": false
         }
       },
@@ -1316,12 +1170,8 @@
           "name": "Seat_AircraftID_Aircraft_AircraftID_fk",
           "tableFrom": "Seat",
           "tableTo": "Aircraft",
-          "columnsFrom": [
-            "AircraftID"
-          ],
-          "columnsTo": [
-            "AircraftID"
-          ],
+          "columnsFrom": ["AircraftID"],
+          "columnsTo": ["AircraftID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1329,12 +1179,8 @@
           "name": "Seat_SeatClassID_SeatClass_SeatClassID_fk",
           "tableFrom": "Seat",
           "tableTo": "SeatClass",
-          "columnsFrom": [
-            "SeatClassID"
-          ],
-          "columnsTo": [
-            "SeatClassID"
-          ],
+          "columnsFrom": ["SeatClassID"],
+          "columnsTo": ["SeatClassID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1342,9 +1188,7 @@
       "compositePrimaryKeys": {
         "Seat_SeatID": {
           "name": "Seat_SeatID",
-          "columns": [
-            "SeatID"
-          ]
+          "columns": ["SeatID"]
         }
       },
       "uniqueConstraints": {},
@@ -1420,30 +1264,22 @@
       "indexes": {
         "idx_ticket_booking": {
           "name": "idx_ticket_booking",
-          "columns": [
-            "BookingID"
-          ],
+          "columns": ["BookingID"],
           "isUnique": false
         },
         "idx_ticket_flight": {
           "name": "idx_ticket_flight",
-          "columns": [
-            "FlightID"
-          ],
+          "columns": ["FlightID"],
           "isUnique": false
         },
         "idx_ticket_seat": {
           "name": "idx_ticket_seat",
-          "columns": [
-            "SeatID"
-          ],
+          "columns": ["SeatID"],
           "isUnique": false
         },
         "idx_ticket_status": {
           "name": "idx_ticket_status",
-          "columns": [
-            "Status"
-          ],
+          "columns": ["Status"],
           "isUnique": false
         }
       },
@@ -1452,12 +1288,8 @@
           "name": "Ticket_BookingID_Booking_BookingID_fk",
           "tableFrom": "Ticket",
           "tableTo": "Booking",
-          "columnsFrom": [
-            "BookingID"
-          ],
-          "columnsTo": [
-            "BookingID"
-          ],
+          "columnsFrom": ["BookingID"],
+          "columnsTo": ["BookingID"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1465,12 +1297,8 @@
           "name": "Ticket_FlightID_Flight_FlightID_fk",
           "tableFrom": "Ticket",
           "tableTo": "Flight",
-          "columnsFrom": [
-            "FlightID"
-          ],
-          "columnsTo": [
-            "FlightID"
-          ],
+          "columnsFrom": ["FlightID"],
+          "columnsTo": ["FlightID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1478,12 +1306,8 @@
           "name": "Ticket_SeatID_Seat_SeatID_fk",
           "tableFrom": "Ticket",
           "tableTo": "Seat",
-          "columnsFrom": [
-            "SeatID"
-          ],
-          "columnsTo": [
-            "SeatID"
-          ],
+          "columnsFrom": ["SeatID"],
+          "columnsTo": ["SeatID"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1491,9 +1315,7 @@
       "compositePrimaryKeys": {
         "Ticket_TicketID": {
           "name": "Ticket_TicketID",
-          "columns": [
-            "TicketID"
-          ]
+          "columns": ["TicketID"]
         }
       },
       "uniqueConstraints": {},

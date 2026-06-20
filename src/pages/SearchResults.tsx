@@ -17,7 +17,10 @@ export default function SearchResults() {
   const to = searchParams.get("to") || "";
   const date = searchParams.get("date") || "";
   const passengers = Number(searchParams.get("passengers") || "1");
-  const seatClass = (searchParams.get("class") || "ECO") as "ECO" | "BUS" | "FST";
+  const seatClass = (searchParams.get("class") || "ECO") as
+    | "ECO"
+    | "BUS"
+    | "FST";
 
   const [sortBy, setSortBy] = useState<"price" | "time">("price");
 
@@ -53,7 +56,8 @@ export default function SearchResults() {
 
   const sortedFlights = data?.flights
     ? [...data.flights].sort((a, b) => {
-        if (sortBy === "price") return Number(a.basePrice) - Number(b.basePrice);
+        if (sortBy === "price")
+          return Number(a.basePrice) - Number(b.basePrice);
         return (
           new Date(a.scheduledDeparture).getTime() -
           new Date(b.scheduledDeparture).getTime()
@@ -101,7 +105,9 @@ export default function SearchResults() {
           {passengers} {t("common.passengers").toLowerCase()}
           <span className="mx-2">|</span>
           <Plane className="h-4 w-4 mr-1" />
-          {t(`common.${seatClass === "ECO" ? "economy" : seatClass === "BUS" ? "business" : "firstClass"}`)}
+          {t(
+            `common.${seatClass === "ECO" ? "economy" : seatClass === "BUS" ? "business" : "premium"}`
+          )}
         </div>
       </div>
 

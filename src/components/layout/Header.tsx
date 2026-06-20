@@ -118,7 +118,7 @@ export default function Header() {
                   >
                     <User className="h-4 w-4" />
                     <span className="max-w-[100px] truncate">
-                      {user?.name || "User"}
+                      {user?.username || "User"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>

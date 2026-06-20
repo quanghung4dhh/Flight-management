@@ -71,20 +71,29 @@ export default function MyBookings() {
                         {booking.status}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        Mã: <span className="font-mono font-medium">{booking.bookingID}</span>
+                        Mã:{" "}
+                        <span className="font-mono font-medium">
+                          {booking.bookingID}
+                        </span>
                       </span>
                     </div>
 
                     <div className="text-sm text-gray-600">
                       <p>Ngày đặt: {formatDate(booking.bookDate)}</p>
-                      <p>Số lượng hành khách: {booking.totalAmount ? Math.round(Number(booking.totalAmount) / 1000000) : 0}</p>
+                      <p>
+                        Số lượng hành khách:{" "}
+                        {booking.totalAmount
+                          ? Math.round(Number(booking.totalAmount) / 1000000)
+                          : 0}
+                      </p>
                     </div>
                   </div>
 
                   <div className="lg:text-right flex flex-row lg:flex-col justify-between lg:justify-start items-center lg:items-end gap-2">
                     <div>
                       <p className="text-lg font-bold text-blue-600">
-                        {Number(booking.totalAmount).toLocaleString("vi-VN")} VND
+                        {Number(booking.totalAmount).toLocaleString("vi-VN")}{" "}
+                        VND
                       </p>
                     </div>
                     {booking.status === "pending" && (
@@ -92,7 +101,9 @@ export default function MyBookings() {
                         variant="outline"
                         size="sm"
                         className="text-red-600"
-                        onClick={() => cancelBooking.mutate({ id: booking.bookingID })}
+                        onClick={() =>
+                          cancelBooking.mutate({ id: booking.bookingID })
+                        }
                       >
                         Hủy
                       </Button>

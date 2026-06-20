@@ -37,7 +37,7 @@ export default function Layout() {
             </div>
           </div>
           <div className="mt-8 pt-4 border-t border-gray-800 text-center text-sm text-gray-500">
-            SkyViet Airlines. Group 7 - University Project.
+            SkyViet Airlines. Group 7 - HUST.
           </div>
         </div>
       </footer>

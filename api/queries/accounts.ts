@@ -10,7 +10,7 @@ export async function findAccountByUsername(username: string) {
     .from(accounts)
     .where(eq(accounts.username, username))
     .limit(1);
-  
+
   return result[0] || null;
 }
 
@@ -22,7 +22,7 @@ export async function createAccount(data: {
 }) {
   const db = getDb();
   const accountID = nanoid(10);
-  
+
   await db.insert(accounts).values({
     accountID,
     username: data.username,
@@ -30,7 +30,7 @@ export async function createAccount(data: {
     role: data.role,
     status: data.status,
   });
-  
+
   return findAccountByUsername(data.username);
 }
 
@@ -41,6 +41,6 @@ export async function findAccountById(accountID: string) {
     .from(accounts)
     .where(eq(accounts.accountID, accountID))
     .limit(1);
-  
+
   return result[0] || null;
 }

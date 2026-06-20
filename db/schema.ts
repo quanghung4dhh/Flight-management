@@ -24,7 +24,7 @@ export const accounts = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => [
+  table => [
     index("idx_account_username").on(table.username),
     index("idx_account_role").on(table.role),
   ]
@@ -50,7 +50,7 @@ export const customers = mysqlTable(
     address: varchar("Address", { length: 500 }),
     birthday: timestamp("Birthday"),
   },
-  (table) => [
+  table => [
     index("idx_customer_account").on(table.accountID),
     index("idx_customer_email").on(table.email),
   ]
@@ -70,7 +70,7 @@ export const airports = mysqlTable(
     city: varchar("City", { length: 100 }).notNull(),
     country: varchar("Country", { length: 100 }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_airport_iata").on(table.iataCode),
     index("idx_airport_city").on(table.city),
   ]
@@ -95,7 +95,7 @@ export const routes = mysqlTable(
     distance: int("Distance"),
     duration: int("Duration"),
   },
-  (table) => [
+  table => [
     index("idx_route_departure").on(table.departureAirportID),
     index("idx_route_arrival").on(table.arrivalAirportID),
   ]
@@ -116,7 +116,7 @@ export const aircraft = mysqlTable(
     capacity: int("Capacity").notNull(),
     status: varchar("Status", { length: 50 }).notNull(),
   },
-  (table) => [index("idx_aircraft_status").on(table.status)]
+  table => [index("idx_aircraft_status").on(table.status)]
 );
 
 export type Aircraft = typeof aircraft.$inferSelect;
@@ -137,7 +137,7 @@ export const maintenance = mysqlTable(
     stopDate: timestamp("StopDate"),
     status: varchar("Status", { length: 50 }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_maintenance_aircraft").on(table.aircraftID),
     index("idx_maintenance_status").on(table.status),
   ]
@@ -175,7 +175,7 @@ export const flightCrew = mysqlTable(
       .references(() => crew.crewID, { onDelete: "cascade" }),
     assignmentRole: varchar("AssignmentRole", { length: 100 }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_flight_crew_flight").on(table.flightID),
     index("idx_flight_crew_crew").on(table.crewID),
   ]
@@ -210,7 +210,7 @@ export const seats = mysqlTable(
       .references(() => seatClass.seatClassID),
     seatNumber: varchar("SeatNumber", { length: 10 }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_seat_aircraft").on(table.aircraftID),
     index("idx_seat_class").on(table.seatClassID),
   ]
@@ -243,7 +243,7 @@ export const flights = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => [
+  table => [
     index("idx_flight_route").on(table.routeID),
     index("idx_flight_aircraft").on(table.aircraftID),
     index("idx_flight_departure").on(table.scheduledDeparture),
@@ -269,7 +269,7 @@ export const flightPricing = mysqlTable(
       .references(() => seatClass.seatClassID),
     basePrice: decimal("BasePrice", { precision: 15, scale: 2 }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_pricing_flight").on(table.flightID),
     index("idx_pricing_class").on(table.seatClassID),
   ]
@@ -297,7 +297,7 @@ export const bookings = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => [
+  table => [
     index("idx_booking_customer").on(table.customerID),
     index("idx_booking_status").on(table.status),
   ]
@@ -326,9 +326,12 @@ export const tickets = mysqlTable(
     passengerName: varchar("PassengerName", { length: 255 }).notNull(),
     passengerPassport: varchar("PassengerPassport", { length: 50 }),
     passengerDOB: timestamp("PassengerDOB"),
-    purchasedPrice: decimal("PurchasedPrice", { precision: 15, scale: 2 }).notNull(),
+    purchasedPrice: decimal("PurchasedPrice", {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_ticket_booking").on(table.bookingID),
     index("idx_ticket_flight").on(table.flightID),
     index("idx_ticket_seat").on(table.seatID),
@@ -359,7 +362,7 @@ export const payments = mysqlTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => [
+  table => [
     index("idx_payment_booking").on(table.bookingID),
     index("idx_payment_status").on(table.status),
   ]
@@ -381,7 +384,7 @@ export const baggage = mysqlTable(
     weight: int("Weight"),
     price: decimal("Price", { precision: 15, scale: 2 }),
   },
-  (table) => [index("idx_baggage_ticket").on(table.ticketID)]
+  table => [index("idx_baggage_ticket").on(table.ticketID)]
 );
 
 export type Baggage = typeof baggage.$inferSelect;
@@ -402,7 +405,7 @@ export const notifications = mysqlTable(
     sentAt: timestamp("SentAt").notNull(),
     status: varchar("Status", { length: 50 }).notNull(),
   },
-  (table) => [
+  table => [
     index("idx_notification_account").on(table.accountID),
     index("idx_notification_status").on(table.status),
   ]

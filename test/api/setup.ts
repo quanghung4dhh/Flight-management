@@ -6,6 +6,3 @@ vi.mock("../../api/queries/connection", async () => {
     getDb: vi.fn(),
   };
 });
-
-
-

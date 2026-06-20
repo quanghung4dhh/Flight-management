@@ -24,7 +24,10 @@ export default function Booking() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
 
-  const seatClass = (searchParams.get("class") || "ECO") as "ECO" | "BUS" | "FST";
+  const seatClass = (searchParams.get("class") || "ECO") as
+    | "ECO"
+    | "BUS"
+    | "FST";
   const passengers = Number(searchParams.get("passengers") || "1");
 
   const { data: flight, isLoading: flightLoading } = trpc.flight.byId.useQuery(
@@ -32,10 +35,11 @@ export default function Booking() {
     { enabled: !!flightId }
   );
 
-  const { data: seatList, isLoading: seatsLoading } = trpc.flight.seats.useQuery(
-    { flightId: flightId || "" },
-    { enabled: !!flightId }
-  );
+  const { data: seatList, isLoading: seatsLoading } =
+    trpc.flight.seats.useQuery(
+      { flightId: flightId || "" },
+      { enabled: !!flightId }
+    );
 
   const createBooking = trpc.booking.create.useMutation({
     onSuccess: data => {
@@ -99,7 +103,11 @@ export default function Booking() {
     });
   };
 
-  const handlePassengerChange = (index: number, field: string, value: string) => {
+  const handlePassengerChange = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
     const updated = [...passengerDetails];
     updated[index] = { ...updated[index], [field]: value };
     setPassengerDetails(updated);
@@ -121,7 +129,12 @@ export default function Booking() {
   };
 
   const handlePayment = () => {
-    console.log("handlePayment called, bookingId:", bookingId, "paymentMethod:", paymentMethod);
+    console.log(
+      "handlePayment called, bookingId:",
+      bookingId,
+      "paymentMethod:",
+      paymentMethod
+    );
     if (!bookingId || !paymentMethod) return;
     createPayment.mutate({
       bookingId,
@@ -142,9 +155,10 @@ export default function Booking() {
     BUS: "Business",
     FST: "First Class",
   };
-  const filteredSeats = seatList?.filter(s => 
-    s.seatClassName.toLowerCase().includes(classMap[seatClass].toLowerCase())
-  ) || [];
+  const filteredSeats =
+    seatList?.filter(s =>
+      s.seatClassName.toLowerCase().includes(classMap[seatClass].toLowerCase())
+    ) || [];
 
   if (!isAuthenticated) {
     return (
@@ -255,7 +269,10 @@ export default function Booking() {
             <div className="flex justify-between items-center pt-4 border-t">
               <div>
                 <p className="text-sm text-gray-500">
-                  {passengers} x {t(`common.${seatClass === "ECO" ? "economy" : seatClass === "BUS" ? "business" : "firstClass"}`)}
+                  {passengers} x{" "}
+                  {t(
+                    `common.${seatClass === "ECO" ? "economy" : seatClass === "BUS" ? "business" : "premium"}`
+                  )}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {totalAmount.toLocaleString("vi-VN")} VND
@@ -282,7 +299,7 @@ export default function Booking() {
             <p className="text-gray-500 mb-4">
               Đã chọn {selectedSeats.length}/{passengers} ghế
             </p>
-            
+
             {filteredSeats.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 Không có ghế trống cho hạng vé này
@@ -305,14 +322,18 @@ export default function Booking() {
                       disabled={isBooked}
                       onClick={() => {
                         if (isSelected) {
-                          setSelectedSeats(selectedSeats.filter(id => id !== seat.seatID));
+                          setSelectedSeats(
+                            selectedSeats.filter(id => id !== seat.seatID)
+                          );
                         } else if (selectedSeats.length < passengers) {
                           setSelectedSeats([...selectedSeats, seat.seatID]);
                         }
                       }}
                     >
                       <div>{seat.seatNumber}</div>
-                      <div className="text-[10px] opacity-70">{seat.seatClassName}</div>
+                      <div className="text-[10px] opacity-70">
+                        {seat.seatClassName}
+                      </div>
                     </button>
                   );
                 })}
@@ -345,8 +366,16 @@ export default function Booking() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[
-                { id: "credit_card", icon: CreditCard, label: t("booking.creditCard") },
-                { id: "bank_transfer", icon: Wallet, label: t("booking.bankTransfer") },
+                {
+                  id: "credit_card",
+                  icon: CreditCard,
+                  label: t("booking.creditCard"),
+                },
+                {
+                  id: "bank_transfer",
+                  icon: Wallet,
+                  label: t("booking.bankTransfer"),
+                },
                 { id: "momo", icon: QrCode, label: "Momo" },
               ].map(method => (
                 <button
@@ -358,7 +387,7 @@ export default function Booking() {
                   }`}
                   onClick={() => {
                     setPaymentMethod(method.id);
-                    handlePayment();  
+                    handlePayment();
                   }}
                 >
                   <method.icon className="h-8 w-8" />
@@ -413,9 +442,7 @@ export default function Booking() {
               {t("booking.bookingConfirmed")}
             </h2>
             <p className="text-gray-600 mb-2">{t("booking.bookingCode")}:</p>
-            <p className="text-3xl font-bold text-blue-600 mb-6">
-              {bookingId}
-            </p>
+            <p className="text-3xl font-bold text-blue-600 mb-6">{bookingId}</p>
             <div className="flex justify-center gap-4">
               <Button onClick={() => navigate("/my-bookings")}>
                 {t("common.myBookings")}

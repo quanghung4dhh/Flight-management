@@ -61,7 +61,9 @@ export default function Profile() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-lg font-semibold">{user?.username || "User"}</h2>
+              <h2 className="text-lg font-semibold">
+                {user?.username || "User"}
+              </h2>
               <p className="text-sm text-gray-500">{user?.accountID}</p>
               <Badge variant="outline" className="mt-1">
                 {user?.role === "admin" ? "Admin" : "Customer"}
@@ -138,7 +140,9 @@ export default function Profile() {
                 type="date"
                 defaultValue={
                   user?.customer?.birthday
-                    ? new Date(user.customer.birthday).toISOString().split("T")[0]
+                    ? new Date(user.customer.birthday)
+                        .toISOString()
+                        .split("T")[0]
                     : ""
                 }
                 onChange={e => setBirthday(e.target.value)}

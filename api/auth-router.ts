@@ -13,10 +13,12 @@ export const authRouter = createRouter({
   me: authedQuery.query(opts => opts.ctx.user),
 
   login: publicQuery
-    .input(z.object({ 
-      username: z.string().min(1),
-      password: z.string().min(1) 
-    }))
+    .input(
+      z.object({
+        username: z.string().min(1),
+        password: z.string().min(1),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       const { username, password } = input;
 
@@ -30,7 +32,7 @@ export const authRouter = createRouter({
         throw new Error("Invalid username or password");
       }
 
-      const token = await signSessionToken({ 
+      const token = await signSessionToken({
         userId: account.accountID,
       });
       const opts = getSessionCookieOptions(ctx.req.headers);
@@ -46,13 +48,13 @@ export const authRouter = createRouter({
         })
       );
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         user: {
           accountID: account.accountID,
           username: account.username,
           role: account.role,
-        } 
+        },
       };
     }),
 
@@ -95,7 +97,7 @@ export const authRouter = createRouter({
         birthday: null,
       });
 
-      const token = await signSessionToken({ 
+      const token = await signSessionToken({
         userId: account.accountID,
       });
       const opts = getSessionCookieOptions(ctx.req.headers);
@@ -111,13 +113,13 @@ export const authRouter = createRouter({
         })
       );
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         user: {
           accountID: account.accountID,
           username: account.username,
           role: account.role,
-        } 
+        },
       };
     }),
 

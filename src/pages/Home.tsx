@@ -201,8 +201,12 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ECO">{t("common.economy")}</SelectItem>
-                      <SelectItem value="BUS">{t("common.business")}</SelectItem>
-                      <SelectItem value="FST">{t("common.firstClass")}</SelectItem>
+                      <SelectItem value="BUS">
+                        {t("common.business")}
+                      </SelectItem>
+                      <SelectItem value="FST">
+                        {t("common.premium")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

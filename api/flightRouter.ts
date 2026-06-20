@@ -17,11 +17,11 @@ export const flightRouter = createRouter({
   search: publicQuery
     .input(
       z.object({
-        departureAirportId: z.string(), // ← Đổi sang string
-        arrivalAirportId: z.string(), // ← Đổi sang string
+        departureAirportId: z.string(),
+        arrivalAirportId: z.string(),
         departureDate: z.string(),
         seatClass: z
-          .enum(["ECO", "BUS", "FST"]) // ← Đổi theo schema mới
+          .enum(["ECO", "BUS", "FST"])
           .optional()
           .default("ECO"),
         passengers: z.number().min(1).max(9).optional().default(1),
@@ -82,7 +82,7 @@ export const flightRouter = createRouter({
 
           return {
             ...flight,
-            basePrice: pricing[0]?.basePrice || "0",
+            basePrice: String(Number(pricing[0]?.basePrice || 0) * 1000),
           };
         })
       );
@@ -91,16 +91,30 @@ export const flightRouter = createRouter({
     }),
 
   byId: publicQuery
-    .input(z.object({ id: z.string() })) // ← Đổi sang string
+    .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const db = getDb();
-      const result = await db
+      const flightResult = await db
         .select()
         .from(flights)
         .where(eq(flights.flightID, input.id))
         .limit(1);
-      return result[0] || null;
+      
+      if (!flightResult[0]) return null;
+      
+      // Get pricing for this flight (default ECO)
+      const pricing = await db
+        .select()
+        .from(flightPricing)
+        .where(eq(flightPricing.flightID, input.id))
+        .limit(1);
+      
+      return {
+        ...flightResult[0],
+        basePrice: String(Number(pricing[0]?.basePrice || 0) * 1000),
+      };
     }),
+    
   seats: publicQuery
     .input(z.object({ flightId: z.string() }))
     .query(async ({ input }) => {
