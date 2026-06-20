@@ -81,10 +81,7 @@ export default function MyBookings() {
                     <div className="text-sm text-gray-600">
                       <p>Ngày đặt: {formatDate(booking.bookDate)}</p>
                       <p>
-                        Số lượng hành khách:{" "}
-                        {booking.totalAmount
-                          ? Math.round(Number(booking.totalAmount) / 1000000)
-                          : 0}
+                        Số lượng hành khách: {booking.passengerCount ?? 0}
                       </p>
                     </div>
                   </div>

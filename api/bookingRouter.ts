@@ -2,7 +2,8 @@ import { z } from "zod";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { bookings, tickets, flights, seats } from "@db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
+import { getTableColumns } from "drizzle-orm";
 
 export const bookingRouter = createRouter({
   create: authedQuery
@@ -60,11 +61,18 @@ export const bookingRouter = createRouter({
 
   myBookings: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
-    return db
-      .select()
+    const results = await db
+      .select({
+        ...getTableColumns(bookings),
+        passengerCount: count(tickets.ticketID),
+      })
       .from(bookings)
+      .leftJoin(tickets, eq(bookings.bookingID, tickets.bookingID))
       .where(eq(bookings.customerID, ctx.user?.accountID || ""))
+      .groupBy(bookings.bookingID)
       .orderBy(desc(bookings.createdAt));
+
+    return results;
   }),
 
   byId: authedQuery
