@@ -6,14 +6,14 @@ Hệ thống quản lý chuyến bay SkyViet Airlines - Đồ án đại học m
 
 ## Deployed URL
 
-Frontend: https://4mp2w2kjd6kbc.kimi.page
+Frontend: Đang cập nhật
 
 ## Cách chạy local
 
 ### 1. Cài đặt các gói bắt buộc
 1. Git
-2. Nodejs
-3. Mysql
+2. Node.js
+3. MySQL
 
 ### 2. Clone và cài đặt các module
 
@@ -36,6 +36,8 @@ EXIT;
 
 ```python
 DATABASE_URL=mysql://root:<password>@localhost:3306/FlightManagement
+JWT_SECRET=your-secret-key-at-least-32-characters-long
+
 
 DB_HOST=localhost
 DB_USER=root
@@ -44,13 +46,13 @@ DB_NAME=FlightManagement
 DB_PORT=3306
 ```
 Trong đó `<password>` là mật khẩu mysql. Các trường `DB_USER`, `DB_NAME` có thể thay đổi nếu đã đặt khác
-### 3. Push schema và seed data
+### 4. Push schema và seed data
 
 ```bash
 npm run db:push
 ```
 
-### 4. Chạy development server
+### 5. Chạy development server
 
 ```bash
 npm run dev
@@ -58,9 +60,13 @@ npm run dev
 
 Server sẽ chạy tại http://localhost:5173
 
-### 5. Seed demo data
+### 6. Seed demo data
 
 Khi vào trang chủ, click nút "Initialize Demo Data" để tạo dữ liệu mẫu (sân bay, chuyến bay, máy bay, phi hành đoàn).
+Database sẽ được tạo sẵn các tài khoản
+1. Tài khoản admin: admin admin123
+2. Tài khoản test: test test123
+
 
 ## Chức năng chính
 
