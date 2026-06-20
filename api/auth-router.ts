@@ -4,6 +4,8 @@ import { getSessionCookieOptions } from "./lib/cookies";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { signSessionToken } from "./auth/session";
 import { findAccountByUsername, createAccount } from "./queries/accounts";
+import { getDb } from "./queries/connection";
+import { customers } from "@db/schema";
 import { z } from "zod";
 import * as bcrypt from "bcryptjs";
 
@@ -30,7 +32,6 @@ export const authRouter = createRouter({
 
       const token = await signSessionToken({ 
         userId: account.accountID,
-        // role: account.role 
       });
       const opts = getSessionCookieOptions(ctx.req.headers);
 
@@ -81,9 +82,21 @@ export const authRouter = createRouter({
 
       if (!account) throw new Error("Failed to create account");
 
+      // Create Customers record linked to account
+      const db = getDb();
+      await db.insert(customers).values({
+        customerID: account.accountID,
+        accountID: account.accountID,
+        name: name,
+        email: "",
+        phone: "",
+        passport: null,
+        address: null,
+        birthday: null,
+      });
+
       const token = await signSessionToken({ 
         userId: account.accountID,
-        // role: account.role 
       });
       const opts = getSessionCookieOptions(ctx.req.headers);
 

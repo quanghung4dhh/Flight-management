@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Plane,
   CreditCard,
@@ -31,16 +32,21 @@ export default function Booking() {
     { enabled: !!flightId }
   );
 
+  const { data: seatList, isLoading: seatsLoading } = trpc.flight.seats.useQuery(
+    { flightId: flightId || "" },
+    { enabled: !!flightId }
+  );
+
   const createBooking = trpc.booking.create.useMutation({
     onSuccess: data => {
-      setBookingId(data.bookingId);
+      setBookingId(data.bookingID);
       setStep("payment");
     },
   });
 
   const createPayment = trpc.payment.create.useMutation({
     onSuccess: data => {
-      setTransactionId(data.transactionId);
+      setPaymentId(data.paymentId);
     },
   });
 
@@ -61,11 +67,11 @@ export default function Booking() {
   );
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [bookingId, setBookingId] = useState<string | null>(null);
-  const [transactionId, setTransactionId] = useState("");
+  const [paymentId, setPaymentId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  if (flightLoading || !flight) {
+  if (flightLoading || seatsLoading || !flight) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -115,6 +121,7 @@ export default function Booking() {
   };
 
   const handlePayment = () => {
+    console.log("handlePayment called, bookingId:", bookingId, "paymentMethod:", paymentMethod);
     if (!bookingId || !paymentMethod) return;
     createPayment.mutate({
       bookingId,
@@ -124,10 +131,20 @@ export default function Booking() {
   };
 
   const handleConfirmPayment = async () => {
-    if (!transactionId) return;
+    if (!paymentId) return;
     setProcessingPayment(true);
-    confirmPayment.mutate({ paymentId: transactionId });
+    confirmPayment.mutate({ paymentId });
   };
+
+  // Filter seats by selected class
+  const classMap: Record<string, string> = {
+    ECO: "Economy",
+    BUS: "Business",
+    FST: "First Class",
+  };
+  const filteredSeats = seatList?.filter(s => 
+    s.seatClassName.toLowerCase().includes(classMap[seatClass].toLowerCase())
+  ) || [];
 
   if (!isAuthenticated) {
     return (
@@ -265,31 +282,42 @@ export default function Booking() {
             <p className="text-gray-500 mb-4">
               Đã chọn {selectedSeats.length}/{passengers} ghế
             </p>
-            <div className="flex flex-wrap gap-2 mb-6">
-              {Array.from({ length: 24 }, (_, i) => {
-                const seatId = `SEAT-${i + 1}`;
-                const isSelected = selectedSeats.includes(seatId);
-                return (
-                  <button
-                    key={seatId}
-                    className={`w-12 h-12 rounded text-xs font-medium transition-colors ${
-                      isSelected
-                        ? "bg-blue-600 text-white"
-                        : "border hover:bg-gray-50"
-                    }`}
-                    onClick={() => {
-                      if (isSelected) {
-                        setSelectedSeats(selectedSeats.filter(id => id !== seatId));
-                      } else if (selectedSeats.length < passengers) {
-                        setSelectedSeats([...selectedSeats, seatId]);
-                      }
-                    }}
-                  >
-                    {i + 1}
-                  </button>
-                );
-              })}
-            </div>
+            
+            {filteredSeats.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                Không có ghế trống cho hạng vé này
+              </p>
+            ) : (
+              <div className="grid grid-cols-6 gap-2 mb-6">
+                {filteredSeats.map(seat => {
+                  const isSelected = selectedSeats.includes(seat.seatID);
+                  const isBooked = !seat.isAvailable;
+                  return (
+                    <button
+                      key={seat.seatID}
+                      className={`p-2 rounded text-xs font-medium transition-colors ${
+                        isBooked
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : isSelected
+                            ? "bg-blue-600 text-white"
+                            : "border hover:bg-blue-50 hover:border-blue-300"
+                      }`}
+                      disabled={isBooked}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedSeats(selectedSeats.filter(id => id !== seat.seatID));
+                        } else if (selectedSeats.length < passengers) {
+                          setSelectedSeats([...selectedSeats, seat.seatID]);
+                        }
+                      }}
+                    >
+                      <div>{seat.seatNumber}</div>
+                      <div className="text-[10px] opacity-70">{seat.seatClassName}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="flex justify-between items-center pt-4 border-t">
               <div className="flex gap-2">
@@ -330,7 +358,7 @@ export default function Booking() {
                   }`}
                   onClick={() => {
                     setPaymentMethod(method.id);
-                    handlePayment();
+                    handlePayment();  
                   }}
                 >
                   <method.icon className="h-8 w-8" />
@@ -339,13 +367,13 @@ export default function Booking() {
               ))}
             </div>
 
-            {transactionId && (
+            {paymentId && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-green-700 font-medium">
                   {t("booking.processing")}
                 </p>
                 <p className="text-sm text-green-600">
-                  Transaction ID: {transactionId}
+                  Transaction ID: {paymentId}
                 </p>
               </div>
             )}
@@ -363,7 +391,7 @@ export default function Booking() {
                 </Button>
                 <Button
                   onClick={handleConfirmPayment}
-                  disabled={!transactionId || processingPayment}
+                  disabled={!paymentId || processingPayment}
                 >
                   {processingPayment ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />

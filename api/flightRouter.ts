@@ -1,7 +1,16 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { flights, routes, airports, aircraft, flightPricing } from "@db/schema";
+import {
+  flights,
+  routes,
+  airports,
+  aircraft,
+  flightPricing,
+  seats,
+  seatClass,
+  tickets,
+} from "@db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 
 export const flightRouter = createRouter({
@@ -91,5 +100,41 @@ export const flightRouter = createRouter({
         .where(eq(flights.flightID, input.id))
         .limit(1);
       return result[0] || null;
+    }),
+  seats: publicQuery
+    .input(z.object({ flightId: z.string() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+
+      const flight = await db
+        .select()
+        .from(flights)
+        .where(eq(flights.flightID, input.flightId))
+        .limit(1);
+
+      if (!flight[0]) throw new Error("Flight not found");
+
+      const seatList = await db
+        .select({
+          seatID: seats.seatID,
+          seatNumber: seats.seatNumber,
+          seatClassID: seats.seatClassID,
+          seatClassName: seatClass.name,
+        })
+        .from(seats)
+        .innerJoin(seatClass, eq(seats.seatClassID, seatClass.seatClassID))
+        .where(eq(seats.aircraftID, flight[0].aircraftID));
+
+      const bookedSeats = await db
+        .select({ seatID: tickets.seatID })
+        .from(tickets)
+        .where(eq(tickets.flightID, input.flightId));
+
+      const bookedSeatIds = new Set(bookedSeats.map(s => s.seatID));
+
+      return seatList.map(s => ({
+        ...s,
+        isAvailable: !bookedSeatIds.has(s.seatID),
+      }));
     }),
 });

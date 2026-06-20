@@ -29,10 +29,11 @@ export const paymentRouter = createRouter({
 
       if (bookingResult.length === 0) throw new Error("Booking not found");
 
+      const paymentID = crypto.randomUUID().slice(0, 10);
       const transactionId = `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
       await db.insert(payments).values({
-        paymentID: crypto.randomUUID().slice(0, 10),
+        paymentID,
         transactionID: transactionId,
         bookingID: input.bookingId,
         payDate: new Date(),
@@ -40,7 +41,7 @@ export const paymentRouter = createRouter({
         status: "pending",
       });
 
-      return { transactionId, status: "pending" };
+      return { paymentId: paymentID, transactionId, status: "pending" };
     }),
 
   confirm: authedQuery

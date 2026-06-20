@@ -1,9 +1,10 @@
-import { db } from "../../db/index.js";
-import { accounts } from "../../db/schema.js";
+import { getDb } from "./connection";
+import { accounts } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export async function findAccountByUsername(username: string) {
+  const db = getDb();
   const result = await db
     .select()
     .from(accounts)
@@ -19,6 +20,7 @@ export async function createAccount(data: {
   role: string;
   status: string;
 }) {
+  const db = getDb();
   const accountID = nanoid(10);
   
   await db.insert(accounts).values({
@@ -33,6 +35,7 @@ export async function createAccount(data: {
 }
 
 export async function findAccountById(accountID: string) {
+  const db = getDb();
   const result = await db
     .select()
     .from(accounts)
