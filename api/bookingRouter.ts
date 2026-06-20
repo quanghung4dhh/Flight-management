@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { createRouter, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { bookings, tickets, flights, seats } from "@db/schema";
+import { bookings, tickets, flights, routes, airports } from "@db/schema";
 import { eq, and, desc, count } from "drizzle-orm";
-import { getTableColumns } from "drizzle-orm";
 
 export const bookingRouter = createRouter({
   create: authedQuery
@@ -61,18 +60,92 @@ export const bookingRouter = createRouter({
 
   myBookings: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
-    const results = await db
-      .select({
-        ...getTableColumns(bookings),
-        passengerCount: count(tickets.ticketID),
-      })
+
+    // Lấy danh sách booking của user
+    const bookingList = await db
+      .select()
       .from(bookings)
-      .leftJoin(tickets, eq(bookings.bookingID, tickets.bookingID))
       .where(eq(bookings.customerID, ctx.user?.accountID || ""))
-      .groupBy(bookings.bookingID)
       .orderBy(desc(bookings.createdAt));
 
-    return results;
+    // Bổ sung thông tin chuyến bay và số khách
+    const enriched = await Promise.all(
+      bookingList.map(async (booking) => {
+        // Đếm số vé
+        const ticketCountResult = await db
+          .select({ count: count() })
+          .from(tickets)
+          .where(eq(tickets.bookingID, booking.bookingID));
+
+        const passengerCount = ticketCountResult[0]?.count ?? 0;
+
+        // Lấy ticket đầu tiên để biết flight
+        const ticketList = await db
+          .select()
+          .from(tickets)
+          .where(eq(tickets.bookingID, booking.bookingID))
+          .limit(1);
+
+        if (ticketList.length === 0) {
+          return { ...booking, passengerCount, flight: null };
+        }
+
+        // Lấy thông tin chuyến bay + route
+        const flightInfo = await db
+          .select()
+          .from(flights)
+          .innerJoin(routes, eq(flights.routeID, routes.routeID))
+          .where(eq(flights.flightID, ticketList[0].flightID))
+          .limit(1);
+
+        if (flightInfo.length === 0) {
+          return { ...booking, passengerCount, flight: null };
+        }
+
+        const flight = flightInfo[0].Flight;
+        const route = flightInfo[0].Route;
+
+        // Lấy sân bay đi và đến riêng biệt (không cần alias)
+        const [depAirport] = await db
+          .select()
+          .from(airports)
+          .where(eq(airports.airportID, route.departureAirportID))
+          .limit(1);
+
+        const [arrAirport] = await db
+          .select()
+          .from(airports)
+          .where(eq(airports.airportID, route.arrivalAirportID))
+          .limit(1);
+
+        return {
+          ...booking,
+          passengerCount,
+          flight: {
+            flightID: flight.flightID,
+            scheduledDeparture: flight.scheduledDeparture,
+            scheduledArrival: flight.scheduledArrival,
+            status: flight.status,
+            departureAirport: depAirport
+              ? {
+                  airportID: depAirport.airportID,
+                  iataCode: depAirport.iataCode,
+                  city: depAirport.city,
+                }
+              : null,
+            arrivalAirport: arrAirport
+              ? {
+                  airportID: arrAirport.airportID,
+                  iataCode: arrAirport.iataCode,
+                  city: arrAirport.city,
+                }
+              : null,
+          },
+        };
+      })
+    );
+
+    return enriched;
   }),
 
   byId: authedQuery

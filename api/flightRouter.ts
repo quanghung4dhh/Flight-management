@@ -11,7 +11,7 @@ import {
   seatClass,
   tickets,
 } from "@db/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, ne } from "drizzle-orm";
 
 export const flightRouter = createRouter({
   search: publicQuery
@@ -149,7 +149,12 @@ export const flightRouter = createRouter({
       const bookedSeats = await db
         .select({ seatID: tickets.seatID })
         .from(tickets)
-        .where(eq(tickets.flightID, input.flightId));
+        .where(
+          and(
+            eq(tickets.flightID, input.flightId),
+            ne(tickets.status, "cancelled") // <-- chỉ lấy vé chưa bị hủy
+          )
+        );
 
       const bookedSeatIds = new Set(bookedSeats.map(s => s.seatID));
 
