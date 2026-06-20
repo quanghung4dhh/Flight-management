@@ -152,15 +152,13 @@ async function seed() {
       for (const [dep, arr, dist, dur] of routePairs) {
         const id = nanoid(10);
         routeIds.push(id);
-        await tx
-          .insert(schema.routes)
-          .values({
-            routeID: id,
-            departureAirportID: dep,
-            arrivalAirportID: arr,
-            distance: dist,
-            duration: dur,
-          });
+        await tx.insert(schema.routes).values({
+          routeID: id,
+          departureAirportID: dep,
+          arrivalAirportID: arr,
+          distance: dist,
+          duration: dur,
+        });
       }
       console.log(`✅ Inserted ${routeIds.length} routes`);
 
@@ -325,15 +323,13 @@ async function seed() {
         for (let i = 0; i < group.count; i++) {
           const id = nanoid(10);
           crewIds.push(id);
-          await tx
-            .insert(schema.crew)
-            .values({
-              crewID: id,
-              name: names[nameIdx++],
-              role: group.role,
-              licenseNumber: `LIC-${nanoid(6).toUpperCase()}`,
-              status: "active",
-            });
+          await tx.insert(schema.crew).values({
+            crewID: id,
+            name: names[nameIdx++],
+            role: group.role,
+            licenseNumber: `LIC-${nanoid(6).toUpperCase()}`,
+            status: "active",
+          });
         }
       }
       console.log(`✅ Inserted ${crewIds.length} crew members`);

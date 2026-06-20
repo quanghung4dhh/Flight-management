@@ -31,7 +31,9 @@ export async function createContext(
 
     const user = await findAccountById(payload.userId as string);
     if (user) ctx.user = user;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (e) { /* empty */ }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (e) {
+    /* empty */
+  }
   return ctx;
 }

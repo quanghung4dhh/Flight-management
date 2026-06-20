@@ -20,10 +20,7 @@ export const flightRouter = createRouter({
         departureAirportId: z.string(),
         arrivalAirportId: z.string(),
         departureDate: z.string(),
-        seatClass: z
-          .enum(["ECO", "BUS", "FST"])
-          .optional()
-          .default("ECO"),
+        seatClass: z.enum(["ECO", "BUS", "FST"]).optional().default("ECO"),
         passengers: z.number().min(1).max(9).optional().default(1),
       })
     )
@@ -91,7 +88,12 @@ export const flightRouter = createRouter({
     }),
 
   byId: publicQuery
-    .input(z.object({ id: z.string() }))
+    .input(
+      z.object({
+        id: z.string(),
+        seatClass: z.enum(["ECO", "BUS", "FST"]).optional().default("ECO"),
+      })
+    )
     .query(async ({ input }) => {
       const db = getDb();
       const flightResult = await db
@@ -99,22 +101,27 @@ export const flightRouter = createRouter({
         .from(flights)
         .where(eq(flights.flightID, input.id))
         .limit(1);
-      
+
       if (!flightResult[0]) return null;
-      
-      // Get pricing for this flight (default ECO)
+
+      // Get pricing for this flight filtered by seatClass
       const pricing = await db
         .select()
         .from(flightPricing)
-        .where(eq(flightPricing.flightID, input.id))
+        .where(
+          and(
+            eq(flightPricing.flightID, input.id),
+            eq(flightPricing.seatClassID, input.seatClass)
+          )
+        )
         .limit(1);
-      
+
       return {
         ...flightResult[0],
         basePrice: String(Number(pricing[0]?.basePrice || 0) * 1000),
       };
     }),
-    
+
   seats: publicQuery
     .input(z.object({ flightId: z.string() }))
     .query(async ({ input }) => {

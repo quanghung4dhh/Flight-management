@@ -31,7 +31,7 @@ export default function Booking() {
   const passengers = Number(searchParams.get("passengers") || "1");
 
   const { data: flight, isLoading: flightLoading } = trpc.flight.byId.useQuery(
-    { id: flightId || "" },
+    { id: flightId || "", seatClass },
     { enabled: !!flightId }
   );
 

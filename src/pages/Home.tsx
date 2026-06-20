@@ -204,9 +204,7 @@ export default function Home() {
                       <SelectItem value="BUS">
                         {t("common.business")}
                       </SelectItem>
-                      <SelectItem value="FST">
-                        {t("common.premium")}
-                      </SelectItem>
+                      <SelectItem value="FST">{t("common.premium")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
