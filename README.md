@@ -1,84 +1,109 @@
 # SkyViet Airlines - Flight Management System
 
-## Gioi thieu
+## Giới thiệu
 
-He thong quan ly chuyen bay SkyViet Airlines - Do an dai hoc mon He Quan Tri CSDL.
+Hệ thống quản lý chuyến bay SkyViet Airlines - Đồ án đại học môn Kỹ thuật phần mềm ứng dụng.
 
 ## Deployed URL
 
-Frontend: https://4mp2w2kjd6kbc.kimi.page
+Frontend: Đang cập nhật
 
-## Cach chay local (Fullstack)
+## Cách chạy local
 
-### 1. Cai dat dependencies
+### 1. Cài đặt các gói bắt buộc
+1. Git
+2. Node.js
+3. MySQL
+
+### 2. Clone và cài đặt các module
 
 ```bash
-cd /mnt/agents/output/app
+git clone https://github.com/quanghung4dhh/Flight-management/
+cd Flight-management
 npm install
 ```
 
-### 2. Setup database
+### 3. Setup database và biến môi trường
 
-Dam bao MySQL dang chay va DATABASE_URL trong file .env da duoc cau hinh dung.
+1. Tạo database
+```bash
+mysql -u root -p
+CREATE DATABASE FlightManagement;
+-- hoặc tên khác, nhớ khớp với DB_NAME trong .env
+EXIT;
+```
+2. Tạo file `.env` cùng cấp với `package.json` <br>
 
-### 3. Push schema va seed data
+```python
+DATABASE_URL=mysql://root:<password>@localhost:3306/FlightManagement
+JWT_SECRET=your-secret-key-at-least-32-characters-long
+
+
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=<password>
+DB_NAME=FlightManagement
+DB_PORT=3306
+```
+Trong đó `<password>` là mật khẩu mysql. Các trường `DB_USER`, `DB_NAME` có thể thay đổi nếu đã đặt khác
+### 4. Push schema và seed data
 
 ```bash
 npm run db:push
 ```
 
-### 4. Chay development server
+### 5. Chạy development server
 
 ```bash
 npm run dev
 ```
 
-Server se chay tai http://localhost:3000
+Server sẽ chạy tại http://localhost:5173
 
-### 5. Seed demo data
+### 6. Seed demo data
 
-Khi vao trang chu, click nut "Initialize Demo Data" de tao du lieu mau (san bay, chuyen bay, may bay, phi hanh doan).
+Khi vào trang chủ, click nút "Initialize Demo Data" để tạo dữ liệu mẫu (sân bay, chuyến bay, máy bay, phi hành đoàn).
+Database sẽ được tạo sẵn các tài khoản
+1. Tài khoản admin: admin admin123
+2. Tài khoản test: test test123
 
-## Chuc nang chinh
+
+## Chức năng chính
 
 ### Customer Portal
 
-- Tim kiem chuyen bay theo tuyen, ngay, hang ve
-- Dat ve va chon ghe ngoi
-- Thanh toan gia lap (Credit Card, Momo, ZaloPay, QR Code)
-- Xem lich su dat ve
-- Quan ly ho so ca nhan
-- Da ngon ngu (Tieng Viet / English)
+- Tìm kiếm chuyến bay theo tuyến, ngày, hạng vé
+- Đặt vé và chọn ghế ngồi
+- Thanh toán giả lập (Credit Card, Momo, ZaloPay, QR Code)
+- Xem lịch sử đặt vé
+- Quản lý hồ sơ cá nhân
+- Đa ngôn ngữ (Tiếng Việt / English)
 
 ### Admin Portal
 
-- Dashboard voi bieu do doanh thu
-- Quan ly chuyen bay (CRUD)
-- Quan ly san bay
-- Quan ly may bay
-- Quan ly dat ve
-- Quan ly khach hang
-- Bao cao doanh thu
+- Dashboard với biểu đồ doanh thu
+- Quản lý chuyến bay (CRUD)
+- Quản lý sân bay
+- Quản lý máy bay
+- Quản lý đặt vé
+- Quản lý khách hàng
+- Báo cáo doanh thu
 
-### Crew & Maintenance (co ban)
-
-- Quan ly thanh vien phi hanh doan
-- Lich bao tri may bay
 
 ## Tech Stack
 
 - Frontend: React 19 + TypeScript + Tailwind CSS + shadcn/ui
 - Backend: tRPC + Drizzle ORM + Hono + MySQL
-- Auth: Kimi OAuth 2.0
 - Charts: Recharts
 - i18n: react-i18next
 
-## Thanh vien nhom
+## Thành viên nhóm: Nhóm 7
+1. Đinh Quang Hùng 20232486
+2. Nguyễn Công Khanh 20213968
+3. Lê Quang Tuấn 20233696
 
-- Nhom 7
 
-## Ghi chu
+## Ghi chú
 
-- Thanh toan duoc gia lap (simulated), khong co tich hop that
-- Auth su dung Kimi OAuth - can dang nhap qua Kimi account
-- Admin duoc phan quyen tu dong cho user co role="admin"
+- Thanh toán được giả lập (simulated), không có tích hợp thật
+- Admin được phân quyền tự động cho user có role="admin"
