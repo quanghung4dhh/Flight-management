@@ -28,6 +28,8 @@ npm install
 1. Tạo database
 ```bash
 mysql -u root -p
+```
+```mysql
 CREATE DATABASE FlightManagement;
 -- hoặc tên khác, nhớ khớp với DB_NAME trong .env
 EXIT;
