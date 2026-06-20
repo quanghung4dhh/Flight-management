@@ -11,6 +11,8 @@ import {
   crew,
   maintenance,
   payments,
+  tickets,
+  routes
 } from "@db/schema";
 import { eq, and, desc, sql, gte, lte, count } from "drizzle-orm";
 
@@ -232,29 +234,109 @@ export const adminRouter = createRouter({
 
   // Booking management
   bookingList: adminQuery
-    .input(
-      z.object({
-        status: z.string().optional(),
-        page: z.number().default(1),
-        limit: z.number().default(20),
+  .input(
+    z.object({
+      status: z.string().optional(),
+      page: z.number().default(1),
+      limit: z.number().default(20),
+    })
+  )
+  .query(async ({ input }) => {
+    const db = getDb();
+    const offset = (input.page - 1) * input.limit;
+
+    const where = input.status
+      ? eq(bookings.status, input.status as any)
+      : undefined;
+
+    // Lấy danh sách booking
+    const bookingList = await db
+      .select()
+      .from(bookings)
+      .where(where)
+      .orderBy(desc(bookings.createdAt))
+      .limit(input.limit)
+      .offset(offset);
+
+    // Bổ sung thông tin chuyến bay và số khách
+    const enriched = await Promise.all(
+      bookingList.map(async (booking) => {
+        // Đếm số vé
+        const ticketCountResult = await db
+          .select({ count: count() })
+          .from(tickets)
+          .where(eq(tickets.bookingID, booking.bookingID));
+
+        const passengerCount = ticketCountResult[0]?.count ?? 0;
+
+        // Lấy ticket đầu tiên để biết flight
+        const ticketList = await db
+          .select()
+          .from(tickets)
+          .where(eq(tickets.bookingID, booking.bookingID))
+          .limit(1);
+
+        if (ticketList.length === 0) {
+          return { ...booking, passengerCount, flight: null };
+        }
+
+        // Lấy thông tin chuyến bay + route
+        const flightInfo = await db
+          .select()
+          .from(flights)
+          .innerJoin(routes, eq(flights.routeID, routes.routeID))
+          .where(eq(flights.flightID, ticketList[0].flightID))
+          .limit(1);
+
+        if (flightInfo.length === 0) {
+          return { ...booking, passengerCount, flight: null };
+        }
+
+        const flight = flightInfo[0].Flight;
+        const route = flightInfo[0].Route;
+
+        // Lấy sân bay đi và đến
+        const [depAirport] = await db
+          .select()
+          .from(airports)
+          .where(eq(airports.airportID, route.departureAirportID))
+          .limit(1);
+
+        const [arrAirport] = await db
+          .select()
+          .from(airports)
+          .where(eq(airports.airportID, route.arrivalAirportID))
+          .limit(1);
+
+        return {
+          ...booking,
+          passengerCount,
+          flight: {
+            flightID: flight.flightID,
+            scheduledDeparture: flight.scheduledDeparture,
+            scheduledArrival: flight.scheduledArrival,
+            status: flight.status,
+            departureAirport: depAirport
+              ? {
+                  airportID: depAirport.airportID,
+                  iataCode: depAirport.iataCode,
+                  city: depAirport.city,
+                }
+              : null,
+            arrivalAirport: arrAirport
+              ? {
+                  airportID: arrAirport.airportID,
+                  iataCode: arrAirport.iataCode,
+                  city: arrAirport.city,
+                }
+              : null,
+          },
+        };
       })
-    )
-    .query(async ({ input }) => {
-      const db = getDb();
-      const offset = (input.page - 1) * input.limit;
+    );
 
-      const where = input.status
-        ? eq(bookings.status, input.status as any)
-        : undefined;
-
-      return db
-        .select()
-        .from(bookings)
-        .where(where)
-        .orderBy(desc(bookings.createdAt))
-        .limit(input.limit)
-        .offset(offset);
-    }),
+    return enriched;
+  }),
 
   // Customer management
   customerList: adminQuery

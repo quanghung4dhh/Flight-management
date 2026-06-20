@@ -15,7 +15,16 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Plane, Users, CreditCard, Ticket, TrendingUp } from "lucide-react";
+import {
+  Plane,
+  Users,
+  CreditCard,
+  Ticket,
+  TrendingUp,
+  MapPin,
+  Clock,
+  Calendar,
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -397,7 +406,7 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      {/* Bookings Tab */}
+      {/* Bookings Tab - ĐÃ CẬP NHẬT */}
       {activeTab === "bookings" && (
         <Card>
           <CardHeader>
@@ -410,7 +419,7 @@ export default function AdminDashboard() {
             {bookingsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-16" />
+                  <Skeleton key={i} className="h-24" />
                 ))}
               </div>
             ) : bookings && bookings.length > 0 ? (
@@ -418,10 +427,11 @@ export default function AdminDashboard() {
                 {bookings.map(booking => (
                   <div
                     key={booking.bookingID}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                    className="flex flex-col p-4 border rounded-lg hover:bg-gray-50"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
+                    {/* Row 1: Booking ID + Status + Price */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
                         <span className="font-mono font-medium">
                           {booking.bookingID}
                         </span>
@@ -429,17 +439,79 @@ export default function AdminDashboard() {
                           {booking.status}
                         </Badge>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        <span>Customer: {booking.customerID}</span>
-                        <span className="mx-2">|</span>
-                        <span>{formatDateTime(booking.bookDate)}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
                       <p className="font-bold text-lg text-blue-600">
                         {Number(booking.totalAmount).toLocaleString("vi-VN")}{" "}
                         VND
                       </p>
+                    </div>
+
+                    {/* Row 2: Flight Info */}
+                    {booking.flight && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                        <div className="flex items-center justify-between">
+                          {/* Departure */}
+                          <div className="text-center flex-1">
+                            <p className="text-lg font-bold">
+                              {formatTime(booking.flight.scheduledDeparture)}
+                            </p>
+                            <div className="flex items-center justify-center gap-1 text-xs text-gray-600 mt-1">
+                              <MapPin className="h-3 w-3" />
+                              <span>
+                                {booking.flight.departureAirport?.city}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400">
+                              {booking.flight.departureAirport?.iataCode}
+                            </p>
+                          </div>
+
+                          {/* Flight path */}
+                          <div className="flex flex-col items-center px-3">
+                            <Plane className="h-4 w-4 text-blue-600 rotate-90" />
+                            <div className="w-16 h-0.5 bg-blue-600 my-1" />
+                            <p className="text-[10px] text-gray-500">
+                              {booking.flight.flightID}
+                            </p>
+                          </div>
+
+                          {/* Arrival */}
+                          <div className="text-center flex-1">
+                            <p className="text-lg font-bold">
+                              {formatTime(booking.flight.scheduledArrival)}
+                            </p>
+                            <div className="flex items-center justify-center gap-1 text-xs text-gray-600 mt-1">
+                              <MapPin className="h-3 w-3" />
+                              <span>
+                                {booking.flight.arrivalAirport?.city}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400">
+                              {booking.flight.arrivalAirport?.iataCode}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {formatDate(booking.flight.scheduledDeparture)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              {booking.passengerCount ?? 0} khách
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Row 3: Customer + Date */}
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Khách: {booking.customerID}</span>
+                      <span>{formatDateTime(booking.bookDate)}</span>
                     </div>
                   </div>
                 ))}
