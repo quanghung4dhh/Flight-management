@@ -36,7 +36,7 @@ export default function Home() {
   const [departureDate, setDepartureDate] = useState("");
   const [tripType, setTripType] = useState<"one_way" | "round_trip">("one_way");
   const [passengers, setPassengers] = useState("1");
-  const [seatClass, setSeatClass] = useState("economy");
+  const [seatClass, setSeatClass] = useState("ECO");
 
   const { data: airports, isLoading: airportsLoading } =
     trpc.airport.list.useQuery();
@@ -132,8 +132,8 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent>
                       {airports?.map(ap => (
-                        <SelectItem key={ap.id} value={String(ap.id)}>
-                          {ap.code} - {ap.city}
+                        <SelectItem key={ap.airportID} value={ap.airportID}>
+                          {ap.iataCode} - {ap.city}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -151,8 +151,8 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent>
                       {airports?.map(ap => (
-                        <SelectItem key={ap.id} value={String(ap.id)}>
-                          {ap.code} - {ap.city}
+                        <SelectItem key={ap.airportID} value={ap.airportID}>
+                          {ap.iataCode} - {ap.city}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -200,15 +200,9 @@ export default function Home() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="economy">
-                        {t("common.economy")}
-                      </SelectItem>
-                      <SelectItem value="premium">
-                        {t("common.premium")}
-                      </SelectItem>
-                      <SelectItem value="business">
-                        {t("common.business")}
-                      </SelectItem>
+                      <SelectItem value="ECO">{t("common.economy")}</SelectItem>
+                      <SelectItem value="BUS">{t("common.business")}</SelectItem>
+                      <SelectItem value="FST">{t("common.firstClass")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -282,11 +276,11 @@ export default function Home() {
               key={i}
               className="hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => {
-                const apFrom = airports?.find(a => a.code === route.from);
-                const apTo = airports?.find(a => a.code === route.to);
+                const apFrom = airports?.find(a => a.iataCode === route.from);
+                const apTo = airports?.find(a => a.iataCode === route.to);
                 if (apFrom && apTo) {
-                  setFromAirport(String(apFrom.id));
-                  setToAirport(String(apTo.id));
+                  setFromAirport(apFrom.airportID);
+                  setToAirport(apTo.airportID);
                   setDepartureDate(today);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }

@@ -4,9 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { trpc } from "@/lib/trpc";
+import { trpc } from "@/providers/trpc";
 
-// ✅ Đổi từ email sang username
 type LoginForm = { username: string; password: string };
 type SignupForm = { username: string; password: string; name: string };
 
@@ -57,11 +56,10 @@ export default function Login() {
               className="space-y-4"
             >
               <div>
-                {/* ✅ Đổi label và input */}
                 <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
-                  type="text"  // ✅ Đổi từ email sang text
+                  type="text"
                   {...loginForm.register("username", { required: true })}
                   placeholder="Enter username"
                 />
@@ -111,11 +109,10 @@ export default function Login() {
                 />
               </div>
               <div>
-                {/* ✅ Đổi label và input */}
                 <Label htmlFor="signup-username">Username</Label>
                 <Input
                   id="signup-username"
-                  type="text"  // ✅ Đổi từ email sang text
+                  type="text"
                   {...signupForm.register("username", { required: true })}
                   placeholder="Enter username"
                 />

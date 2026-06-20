@@ -7,7 +7,7 @@ import { findAccountById } from "./queries/accounts.js";
 export type TrpcContext = {
   req: Request;
   resHeaders: Headers;
-  user?: Account;  // ← Đổi từ User sang Account
+  user?: Account;
 };
 
 export async function createContext(
@@ -15,18 +15,32 @@ export async function createContext(
 ): Promise<TrpcContext> {
   const ctx: TrpcContext = { req: opts.req, resHeaders: opts.resHeaders };
   try {
-    const cookies = cookie.parse(opts.req.headers.get("cookie") || "");
-    const token = cookies["session"];
-    if (!token) return ctx;
+    const cookieHeader = opts.req.headers.get("cookie") || "";
+    console.log("DEBUG cookie header:", cookieHeader);
+    
+    const cookies = cookie.parse(cookieHeader);
+    console.log("DEBUG parsed cookies:", cookies);
+    
+    const token = cookies["kimi_sid"];
+    console.log("DEBUG token:", token ? "EXISTS" : "MISSING");
+    if (!token) {
+      console.log("DEBUG: No token, returning empty context");
+      return ctx;
+    }
 
     const payload = await verifySessionToken(token);
-    if (!payload) return ctx;
+    console.log("DEBUG payload:", payload);
+    if (!payload) {
+      console.log("DEBUG: Invalid token, returning empty context");
+      return ctx;
+    }
 
-    // ← Đổi từ parseInt(payload.userId) sang payload.accountID (string)
-    const user = await findAccountById(payload.accountID as string);
+    console.log("DEBUG userId from payload:", payload.userId);
+    const user = await findAccountById(payload.userId as string);
+    console.log("DEBUG user found:", user ? "YES" : "NO", user);
     if (user) ctx.user = user;
-  } catch {
-    // Authentication is optional
+  } catch (e) {
+    console.error("DEBUG context error:", e);
   }
   return ctx;
 }

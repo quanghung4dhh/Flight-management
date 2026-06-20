@@ -9,8 +9,8 @@ export const bookingRouter = createRouter({
     .input(
       z
         .object({
-          flightID: z.string(),
-          seatIDs: z.array(z.string()),
+          flightId: z.string(),
+          seatIds: z.array(z.string()),
           passengerDetails: z.array(
             z.object({
               name: z.string(),
@@ -19,9 +19,9 @@ export const bookingRouter = createRouter({
           ),
           totalAmount: z.number(),
         })
-        .refine(data => data.passengerDetails.length === data.seatIDs.length, {
+        .refine(data => data.passengerDetails.length === data.seatIds.length, {
           message: "Number of passengers must match number of seats",
-          path: ["seatIDs"],
+          path: ["seatIds"],
         })
     )
     .mutation(async ({ ctx, input }) => {
@@ -43,8 +43,8 @@ export const bookingRouter = createRouter({
           await tx.insert(tickets).values({
             ticketID: crypto.randomUUID().slice(0, 10),
             bookingID,
-            flightID: input.flightID,
-            seatID: input.seatIDs[i],
+            flightID: input.flightId,
+            seatID: input.seatIds[i],
             status: "active",
             passengerName: input.passengerDetails[i].name,
             passengerPassport: input.passengerDetails[i].passport || null,

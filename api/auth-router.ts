@@ -29,8 +29,8 @@ export const authRouter = createRouter({
       }
 
       const token = await signSessionToken({ 
-        accountID: account.accountID,
-        role: account.role 
+        userId: account.accountID,
+        // role: account.role 
       });
       const opts = getSessionCookieOptions(ctx.req.headers);
 
@@ -82,8 +82,8 @@ export const authRouter = createRouter({
       if (!account) throw new Error("Failed to create account");
 
       const token = await signSessionToken({ 
-        accountID: account.accountID,
-        role: account.role 
+        userId: account.accountID,
+        // role: account.role 
       });
       const opts = getSessionCookieOptions(ctx.req.headers);
 

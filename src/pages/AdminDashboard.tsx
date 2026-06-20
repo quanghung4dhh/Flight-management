@@ -20,7 +20,6 @@ import { Plane, Users, CreditCard, Ticket, TrendingUp } from "lucide-react";
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  // time range can be added later
 
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: revenue } = trpc.admin.revenueReport.useQuery({});
@@ -220,29 +219,25 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               {bookings?.slice(0, 5).map(booking => (
                 <div
-                  key={booking.id}
+                  key={booking.bookingID}
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-medium text-sm">
-                        {booking.bookingCode}
+                        {booking.bookingID}
                       </span>
                       <Badge className={getStatusBadge(booking.status)}>
                         {booking.status}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      {booking.flight?.route?.departureAirport?.code} →{" "}
-                      {booking.flight?.route?.arrivalAirport?.code}
+                      {formatDate(booking.bookDate)}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">
                       {Number(booking.totalAmount).toLocaleString("vi-VN")} VND
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {booking.user?.name}
                     </p>
                   </div>
                 </div>
@@ -264,19 +259,18 @@ export default function AdminDashboard() {
             <div className="space-y-3">
               {flights?.slice(0, 5).map(flight => (
                 <div
-                  key={flight.id}
+                  key={flight.flightID}
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{flight.flightNumber}</span>
+                      <span className="font-medium">{flight.flightID}</span>
                       <Badge className={getStatusBadge(flight.status)}>
                         {flight.status}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      {flight.route?.departureAirport?.code} →{" "}
-                      {flight.route?.arrivalAirport?.code}
+                      {flight.routeID}
                     </p>
                   </div>
                   <div className="text-right">

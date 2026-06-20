@@ -13,14 +13,11 @@ export default function SearchResults() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const from = Number(searchParams.get("from"));
-  const to = Number(searchParams.get("to"));
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
   const date = searchParams.get("date") || "";
   const passengers = Number(searchParams.get("passengers") || "1");
-  const seatClass = (searchParams.get("class") || "economy") as
-    | "economy"
-    | "premium"
-    | "business";
+  const seatClass = (searchParams.get("class") || "ECO") as "ECO" | "BUS" | "FST";
 
   const [sortBy, setSortBy] = useState<"price" | "time">("price");
 
@@ -56,7 +53,7 @@ export default function SearchResults() {
 
   const sortedFlights = data?.flights
     ? [...data.flights].sort((a, b) => {
-        if (sortBy === "price") return Number(a.price) - Number(b.price);
+        if (sortBy === "price") return Number(a.basePrice) - Number(b.basePrice);
         return (
           new Date(a.scheduledDeparture).getTime() -
           new Date(b.scheduledDeparture).getTime()
@@ -64,8 +61,8 @@ export default function SearchResults() {
       })
     : [];
 
-  const departureAirport = airports?.find(a => a.id === from);
-  const arrivalAirport = airports?.find(a => a.id === to);
+  const departureAirport = airports?.find(a => a.airportID === from);
+  const arrivalAirport = airports?.find(a => a.airportID === to);
 
   if (isLoading) {
     return (
@@ -104,7 +101,7 @@ export default function SearchResults() {
           {passengers} {t("common.passengers").toLowerCase()}
           <span className="mx-2">|</span>
           <Plane className="h-4 w-4 mr-1" />
-          {t(`common.${seatClass}`)}
+          {t(`common.${seatClass === "ECO" ? "economy" : seatClass === "BUS" ? "business" : "firstClass"}`)}
         </div>
       </div>
 
@@ -146,11 +143,11 @@ export default function SearchResults() {
         ) : (
           sortedFlights.map(flight => (
             <Card
-              key={flight.id}
+              key={flight.flightID}
               className="hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() =>
                 navigate(
-                  `/booking/${flight.id}?class=${seatClass}&passengers=${passengers}`
+                  `/booking/${flight.flightID}?class=${seatClass}&passengers=${passengers}`
                 )
               }
             >
@@ -163,15 +160,13 @@ export default function SearchResults() {
                         {formatTime(flight.scheduledDeparture)}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {departureAirport?.code}
+                        {departureAirport?.iataCode}
                       </p>
                     </div>
 
                     <div className="flex-1 flex flex-col items-center px-4">
                       <p className="text-xs text-gray-500 mb-1">
-                        {formatDuration(
-                          data?.route?.estimatedDurationMinutes || 0
-                        )}
+                        {formatDuration(data?.route?.duration || 0)}
                       </p>
                       <div className="w-full flex items-center">
                         <div className="w-2 h-2 rounded-full bg-blue-600" />
@@ -181,7 +176,7 @@ export default function SearchResults() {
                         <div className="w-2 h-2 rounded-full bg-blue-600" />
                       </div>
                       <Badge variant="outline" className="mt-1 text-xs">
-                        {flight.flightNumber}
+                        {flight.flightID}
                       </Badge>
                     </div>
 
@@ -190,23 +185,15 @@ export default function SearchResults() {
                         {formatTime(flight.scheduledArrival)}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {arrivalAirport?.code}
+                        {arrivalAirport?.iataCode}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Aircraft & Seats */}
-                  <div className="text-sm text-gray-600 lg:text-right">
-                    <p>{flight.aircraft?.model}</p>
-                    <p className="text-green-600 font-medium">
-                      {flight.availableSeats} {t("search.availableSeats")}
-                    </p>
                   </div>
 
                   {/* Price */}
                   <div className="text-right lg:pl-6 lg:border-l">
                     <p className="text-2xl font-bold text-blue-600">
-                      {formatPrice(flight.price)} VND
+                      {formatPrice(flight.basePrice)} VND
                     </p>
                     <p className="text-sm text-gray-500">
                       / {t("common.adult").toLowerCase()}
