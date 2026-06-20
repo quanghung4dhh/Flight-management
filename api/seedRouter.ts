@@ -1,18 +1,120 @@
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import * as schema from "@db/schema";
+import bcryptjs from "bcryptjs";
 
 export const seedRouter = createRouter({
   run: publicQuery.mutation(async () => {
     const db = getDb();
 
     try {
+      // Kiểm tra xem đã có data chưa
       const existingAirports = await db.select().from(schema.airports).limit(1);
+      
       if (existingAirports.length > 0) {
-        return { message: "Data already seeded" };
+        // Đã có data, nhưng vẫn kiểm tra xem có tài khoản chưa
+        const existingAccounts = await db.select().from(schema.accounts).limit(1);
+        
+        if (existingAccounts.length > 0) {
+          return { message: "Data already seeded (including accounts)" };
+        }
+        
+        // Có airports nhưng chưa có accounts → chỉ seed accounts
+        const adminPassword = bcryptjs.hashSync("admin123", 10);
+        const testPassword = bcryptjs.hashSync("test123", 10);
+
+        await db.insert(schema.accounts).values([
+          {
+            accountID: "ACC-ADMIN-01",
+            username: "admin",
+            password: adminPassword,
+            role: "admin",
+            status: "active",
+          },
+          {
+            accountID: "ACC-TEST-01",
+            username: "test",
+            password: testPassword,
+            role: "customer",
+            status: "active",
+          },
+        ] as (typeof schema.accounts.$inferInsert)[]);
+
+        await db.insert(schema.customers).values([
+          {
+            customerID: "ACC-ADMIN-01",
+            accountID: "ACC-ADMIN-01",
+            name: "Quản trị viên",
+            email: "admin@skyviet.com",
+            phone: null,
+            passport: null,
+            address: null,
+            birthday: null,
+          },
+          {
+            customerID: "ACC-TEST-01",
+            accountID: "ACC-TEST-01",
+            name: "Khách hàng Test",
+            email: "test@skyviet.com",
+            phone: "0901234567",
+            passport: null,
+            address: "TP. Hồ Chí Minh",
+            birthday: null,
+          },
+        ] as (typeof schema.customers.$inferInsert)[]);
+
+        return { message: "Accounts seeded successfully (airports already exist)" };
       }
 
-      // Seed airports
+      // ==========================================
+      // SEED TẤT CẢ TỪ ĐẦU
+      // ==========================================
+
+      // 1. ACCOUNTS
+      const adminPassword = bcryptjs.hashSync("admin123", 10);
+      const testPassword = bcryptjs.hashSync("test123", 10);
+
+      await db.insert(schema.accounts).values([
+        {
+          accountID: "ACC-ADMIN-01",
+          username: "admin",
+          password: adminPassword,
+          role: "admin",
+          status: "active",
+        },
+        {
+          accountID: "ACC-TEST-01",
+          username: "test",
+          password: testPassword,
+          role: "customer",
+          status: "active",
+        },
+      ] as (typeof schema.accounts.$inferInsert)[]);
+
+      await db.insert(schema.customers).values([
+        {
+          customerID: "ACC-ADMIN-01",
+          accountID: "ACC-ADMIN-01",
+          name: "Quản trị viên",
+          email: "admin@skyviet.com",
+          phone: null,
+          passport: null,
+          address: null,
+          birthday: null,
+        },
+        {
+          customerID: "ACC-TEST-01",
+          accountID: "ACC-TEST-01",
+          name: "Khách hàng Test",
+          email: "test@skyviet.com",
+          phone: "0901234567",
+          passport: null,
+          address: "TP. Hồ Chí Minh",
+          birthday: null,
+        },
+      ] as (typeof schema.customers.$inferInsert)[]);
+
+      // 2. AIRPORTS
       await db.insert(schema.airports).values([
         {
           airportID: "AP-SGN",
@@ -58,7 +160,7 @@ export const seedRouter = createRouter({
         },
       ] as (typeof schema.airports.$inferInsert)[]);
 
-      // Seed aircraft
+      // 3. AIRCRAFT
       await db.insert(schema.aircraft).values([
         {
           aircraftID: "AC-001",
@@ -83,7 +185,7 @@ export const seedRouter = createRouter({
         },
       ] as (typeof schema.aircraft.$inferInsert)[]);
 
-      // Seed routes
+      // 4. ROUTES
       await db.insert(schema.routes).values([
         {
           routeID: "RT-001",
@@ -129,14 +231,14 @@ export const seedRouter = createRouter({
         },
       ] as (typeof schema.routes.$inferInsert)[]);
 
-      // Seed seat classes
+      // 5. SEAT CLASSES
       await db.insert(schema.seatClass).values([
         { seatClassID: "ECO", name: "Economy" },
         { seatClassID: "BUS", name: "Business" },
         { seatClassID: "FST", name: "First Class" },
       ] as (typeof schema.seatClass.$inferInsert)[]);
 
-      // Seed seats
+      // 6. SEATS
       const colLetters = ["A", "B", "C", "D", "E", "F"];
       const aircraftList = await db.select().from(schema.aircraft);
 
@@ -161,7 +263,7 @@ export const seedRouter = createRouter({
           .values(seatData as (typeof schema.seats.$inferInsert)[]);
       }
 
-      // Seed flights
+      // 7. FLIGHTS
       const now = new Date();
       const flightsData = [];
       const routesList = await db.select().from(schema.routes);
@@ -197,7 +299,7 @@ export const seedRouter = createRouter({
         .insert(schema.flights)
         .values(flightsData as (typeof schema.flights.$inferInsert)[]);
 
-      // Seed flight pricing
+      // 8. FLIGHT PRICING
       const allFlights = await db.select().from(schema.flights);
       const seatClasses = await db.select().from(schema.seatClass);
 
@@ -219,7 +321,7 @@ export const seedRouter = createRouter({
         }
       }
 
-      // Seed crew
+      // 9. CREW
       await db.insert(schema.crew).values([
         {
           crewID: "CR-001",
@@ -244,7 +346,7 @@ export const seedRouter = createRouter({
         },
       ] as (typeof schema.crew.$inferInsert)[]);
 
-      // Seed flight crew assignments
+      // 10. FLIGHT CREW
       const crewList = await db.select().from(schema.crew);
       for (let f = 0; f < Math.min(6, allFlights.length); f++) {
         await db.insert(schema.flightCrew).values([
@@ -269,7 +371,7 @@ export const seedRouter = createRouter({
         ] as (typeof schema.flightCrew.$inferInsert)[]);
       }
 
-      // Seed maintenance
+      // 11. MAINTENANCE
       await db.insert(schema.maintenance).values([
         {
           maintenanceID: "MN-001",
@@ -297,7 +399,8 @@ export const seedRouter = createRouter({
 
       return { message: "Seed data inserted successfully" };
     } catch (error: any) {
-      return { message: `Error: ${error.message}` };
+      console.error("SEED ERROR:", error);
+      return { message: `Error: ${error.message}`, details: error.stack };
     }
   }),
 });
