@@ -7,6 +7,23 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   LineChart,
   Line,
   XAxis,
@@ -24,6 +41,7 @@ import {
   MapPin,
   Clock,
   Calendar,
+  Plus,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -34,6 +52,19 @@ export default function AdminDashboard() {
   const [flightPage, setFlightPage] = useState(1);
   const [bookingPage, setBookingPage] = useState(1);
 
+  // Dialog state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  // Thêm state giá vé
+  const [newFlight, setNewFlight] = useState({
+    routeID: "",
+    aircraftID: "",
+    scheduledDeparture: "",
+    scheduledArrival: "",
+    status: "scheduled" as const,
+    ecoPrice: 1500000,
+    busPrice: 4000000,
+    fstPrice: 8000000,
+  });
   const { data: stats, isLoading: statsLoading } = trpc.admin.stats.useQuery();
   const { data: revenue } = trpc.admin.revenueReport.useQuery({});
   const { data: flights, isLoading: flightsLoading } =
@@ -46,6 +77,25 @@ export default function AdminDashboard() {
       page: bookingPage,
       limit: 10,
     });
+
+  // Data for create flight form
+  const { data: routeList } = trpc.admin.routeList.useQuery();
+  const { data: aircraftList } = trpc.admin.aircraftList.useQuery();
+
+  const createFlight = trpc.admin.flightCreate.useMutation({
+    onSuccess: () => {
+      setIsCreateOpen(false);
+      setNewFlight({
+        routeID: "",
+        aircraftID: "",
+        scheduledDeparture: "",
+        scheduledArrival: "",
+        status: "scheduled",
+      });
+      // Refresh flight list
+      window.location.reload();
+    },
+  });
 
   const formatCurrency = (amount: number) => {
     return `${(amount / 1000000).toFixed(1)}M`;
@@ -86,6 +136,27 @@ export default function AdminDashboard() {
       paid: "bg-green-100 text-green-800",
     };
     return styles[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const handleCreateFlight = () => {
+    if (
+      !newFlight.routeID ||
+      !newFlight.aircraftID ||
+      !newFlight.scheduledDeparture ||
+      !newFlight.scheduledArrival
+    )
+      return;
+
+    createFlight.mutate({
+      routeID: newFlight.routeID,
+      aircraftID: newFlight.aircraftID,
+      scheduledDeparture: newFlight.scheduledDeparture,
+      scheduledArrival: newFlight.scheduledArrival,
+      status: newFlight.status,
+      ecoPrice: newFlight.ecoPrice,
+      busPrice: newFlight.busPrice,
+      fstPrice: newFlight.fstPrice,
+    });
   };
 
   if (statsLoading && activeTab === "dashboard") {
@@ -327,15 +398,199 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {/* Flights Tab */}
+      {/* Flights Tab - ĐÃ THÊM NÚT TẠO CHUYẾN BAY */}
       {activeTab === "flights" && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Plane className="h-5 w-5" />
               Quản lý chuyến bay
             </CardTitle>
+
+            {/* Dialog tạo chuyến bay */}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Thêm chuyến bay
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Thêm chuyến bay mới</DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 py-4">
+                  {/* Route */}
+                  <div className="space-y-2">
+                    <Label>Tuyến bay</Label>
+                    <Select
+                      value={newFlight.routeID}
+                      onValueChange={v =>
+                        setNewFlight({ ...newFlight, routeID: v })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn tuyến bay" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {routeList?.map(route => (
+                          <SelectItem key={route.routeID} value={route.routeID}>
+                            {route.routeID} ({route.departureAirportID} →{" "}
+                            {route.arrivalAirportID})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Aircraft */}
+                  <div className="space-y-2">
+                    <Label>Máy bay</Label>
+                    <Select
+                      value={newFlight.aircraftID}
+                      onValueChange={v =>
+                        setNewFlight({ ...newFlight, aircraftID: v })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn máy bay" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {aircraftList?.map(ac => (
+                          <SelectItem key={ac.aircraftID} value={ac.aircraftID}>
+                            {ac.model} ({ac.aircraftID})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Departure Time */}
+                  <div className="space-y-2">
+                    <Label>Giờ cất cánh</Label>
+                    <Input
+                      type="datetime-local"
+                      value={newFlight.scheduledDeparture}
+                      onChange={e =>
+                        setNewFlight({
+                          ...newFlight,
+                          scheduledDeparture: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Arrival Time */}
+                  <div className="space-y-2">
+                    <Label>Giờ hạ cánh</Label>
+                    <Input
+                      type="datetime-local"
+                      value={newFlight.scheduledArrival}
+                      onChange={e =>
+                        setNewFlight({
+                          ...newFlight,
+                          scheduledArrival: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label>Trạng thái</Label>
+                    <Select
+                      value={newFlight.status}
+                      onValueChange={(v: any) =>
+                        setNewFlight({ ...newFlight, status: v })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="boarding">Boarding</SelectItem>
+                        <SelectItem value="departed">Departed</SelectItem>
+                        <SelectItem value="delayed">Delayed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* Giá vé */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label>Giá Phổ thông (VND)</Label>
+                      <Input
+                        type="number"
+                        value={newFlight.ecoPrice}
+                        onChange={e =>
+                          setNewFlight({
+                            ...newFlight,
+                            ecoPrice: Number(e.target.value),
+                          })
+                        }
+                        min={0}
+                        step={100000}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Giá Thương gia (VND)</Label>
+                      <Input
+                        type="number"
+                        value={newFlight.busPrice}
+                        onChange={e =>
+                          setNewFlight({
+                            ...newFlight,
+                            busPrice: Number(e.target.value),
+                          })
+                        }
+                        min={0}
+                        step={100000}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Giá Hạng nhất (VND)</Label>
+                      <Input
+                        type="number"
+                        value={newFlight.fstPrice}
+                        onChange={e =>
+                          setNewFlight({
+                            ...newFlight,
+                            fstPrice: Number(e.target.value),
+                          })
+                        }
+                        min={0}
+                        step={100000}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateOpen(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleCreateFlight}
+                    disabled={
+                      !newFlight.routeID ||
+                      !newFlight.aircraftID ||
+                      !newFlight.scheduledDeparture ||
+                      !newFlight.scheduledArrival ||
+                      createFlight.isPending
+                    }
+                  >
+                    {createFlight.isPending ? "Đang tạo..." : "Tạo chuyến bay"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
+
           <CardContent>
             {flightsLoading ? (
               <div className="space-y-3">
@@ -406,7 +661,7 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      {/* Bookings Tab - ĐÃ CẬP NHẬT */}
+      {/* Bookings Tab */}
       {activeTab === "bookings" && (
         <Card>
           <CardHeader>
@@ -439,7 +694,7 @@ export default function AdminDashboard() {
                           {booking.status}
                         </Badge>
                       </div>
-                      <p className="font-bold text-lg text-blue-600">
+                      <p className="text-lg font-bold text-blue-600">
                         {Number(booking.totalAmount).toLocaleString("vi-VN")}{" "}
                         VND
                       </p>
@@ -481,9 +736,7 @@ export default function AdminDashboard() {
                             </p>
                             <div className="flex items-center justify-center gap-1 text-xs text-gray-600 mt-1">
                               <MapPin className="h-3 w-3" />
-                              <span>
-                                {booking.flight.arrivalAirport?.city}
-                              </span>
+                              <span>{booking.flight.arrivalAirport?.city}</span>
                             </div>
                             <p className="text-[10px] text-gray-400">
                               {booking.flight.arrivalAirport?.iataCode}
@@ -500,9 +753,7 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            <span>
-                              {booking.passengerCount ?? 0} khách
-                            </span>
+                            <span>{booking.passengerCount ?? 0} khách</span>
                           </div>
                         </div>
                       </div>

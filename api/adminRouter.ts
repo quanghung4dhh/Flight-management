@@ -11,8 +11,9 @@ import {
   crew,
   maintenance,
   payments,
+  routes,
   tickets,
-  routes
+  flightPricing,
 } from "@db/schema";
 import { eq, and, desc, sql, gte, lte, count } from "drizzle-orm";
 
@@ -25,7 +26,6 @@ export const adminRouter = createRouter({
     const totalBookings = await db.select({ count: count() }).from(bookings);
     const totalUsers = await db.select({ count: count() }).from(accounts);
 
-    // Revenue from bookings via successful payments
     const totalRevenue = await db
       .select({
         total: sql<number>`COALESCE(SUM(${bookings.totalAmount}), 0)`,
@@ -112,40 +112,67 @@ export const adminRouter = createRouter({
     }),
 
   flightCreate: adminQuery
-    .input(
-      z.object({
-        routeID: z.string(),
-        aircraftID: z.string(),
-        scheduledDeparture: z.string(),
-        scheduledArrival: z.string(),
-        status: z
-          .enum([
-            "scheduled",
-            "boarding",
-            "departed",
-            "arrived",
-            "delayed",
-            "cancelled",
-          ])
-          .default("scheduled"),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const db = getDb();
+  .input(
+    z.object({
+      routeID: z.string(),
+      aircraftID: z.string(),
+      scheduledDeparture: z.string(),
+      scheduledArrival: z.string(),
+      status: z
+        .enum([
+          "scheduled",
+          "boarding",
+          "departed",
+          "arrived",
+          "delayed",
+          "cancelled",
+        ])
+        .default("scheduled"),
+      // Thêm giá vé
+      ecoPrice: z.number().min(0).default(1500000),
+      busPrice: z.number().min(0).default(4000000),
+      fstPrice: z.number().min(0).default(8000000),
+    })
+  )
+  .mutation(async ({ input }) => {
+    const db = getDb();
 
-      const flightID = crypto.randomUUID().slice(0, 10);
+    const flightID = crypto.randomUUID().slice(0, 10);
 
-      await db.insert(flights).values({
+    // Tạo chuyến bay
+    await db.insert(flights).values({
+      flightID,
+      routeID: input.routeID,
+      aircraftID: input.aircraftID,
+      scheduledDeparture: new Date(input.scheduledDeparture),
+      scheduledArrival: new Date(input.scheduledArrival),
+      status: input.status,
+    });
+
+    // Tạo giá vé cho 3 hạng
+    await db.insert(flightPricing).values([
+      {
+        pricingID: `PR-${flightID}-ECO`,
         flightID,
-        routeID: input.routeID,
-        aircraftID: input.aircraftID,
-        scheduledDeparture: new Date(input.scheduledDeparture),
-        scheduledArrival: new Date(input.scheduledArrival),
-        status: input.status,
-      });
+        seatClassID: "ECO",
+        basePrice: String(input.ecoPrice),
+      },
+      {
+        pricingID: `PR-${flightID}-BUS`,
+        flightID,
+        seatClassID: "BUS",
+        basePrice: String(input.busPrice),
+      },
+      {
+        pricingID: `PR-${flightID}-FST`,
+        flightID,
+        seatClassID: "FST",
+        basePrice: String(input.fstPrice),
+      },
+    ] as (typeof flightPricing.$inferInsert)[]);
 
-      return { id: flightID };
-    }),
+    return { id: flightID };
+  }),
 
   flightUpdate: adminQuery
     .input(
@@ -189,6 +216,21 @@ export const adminRouter = createRouter({
       return { success: true };
     }),
 
+  // Route & Aircraft for dropdown
+  routeList: adminQuery.query(async () => {
+    const db = getDb();
+    return db.select().from(routes).orderBy(routes.routeID);
+  }),
+
+  aircraftList: adminQuery.query(async () => {
+    const db = getDb();
+    return db
+      .select()
+      .from(aircraft)
+      .where(eq(aircraft.status, "active"))
+      .orderBy(aircraft.model);
+  }),
+
   // Airport management
   airportList: adminQuery.query(async () => {
     const db = getDb();
@@ -211,11 +253,6 @@ export const adminRouter = createRouter({
     }),
 
   // Aircraft management
-  aircraftList: adminQuery.query(async () => {
-    const db = getDb();
-    return db.select().from(aircraft).orderBy(aircraft.model);
-  }),
-
   aircraftCreate: adminQuery
     .input(
       z.object({
@@ -233,110 +270,111 @@ export const adminRouter = createRouter({
     }),
 
   // Booking management
+  // Booking management - ĐÃ SỬA
   bookingList: adminQuery
-  .input(
-    z.object({
-      status: z.string().optional(),
-      page: z.number().default(1),
-      limit: z.number().default(20),
-    })
-  )
-  .query(async ({ input }) => {
-    const db = getDb();
-    const offset = (input.page - 1) * input.limit;
-
-    const where = input.status
-      ? eq(bookings.status, input.status as any)
-      : undefined;
-
-    // Lấy danh sách booking
-    const bookingList = await db
-      .select()
-      .from(bookings)
-      .where(where)
-      .orderBy(desc(bookings.createdAt))
-      .limit(input.limit)
-      .offset(offset);
-
-    // Bổ sung thông tin chuyến bay và số khách
-    const enriched = await Promise.all(
-      bookingList.map(async (booking) => {
-        // Đếm số vé
-        const ticketCountResult = await db
-          .select({ count: count() })
-          .from(tickets)
-          .where(eq(tickets.bookingID, booking.bookingID));
-
-        const passengerCount = ticketCountResult[0]?.count ?? 0;
-
-        // Lấy ticket đầu tiên để biết flight
-        const ticketList = await db
-          .select()
-          .from(tickets)
-          .where(eq(tickets.bookingID, booking.bookingID))
-          .limit(1);
-
-        if (ticketList.length === 0) {
-          return { ...booking, passengerCount, flight: null };
-        }
-
-        // Lấy thông tin chuyến bay + route
-        const flightInfo = await db
-          .select()
-          .from(flights)
-          .innerJoin(routes, eq(flights.routeID, routes.routeID))
-          .where(eq(flights.flightID, ticketList[0].flightID))
-          .limit(1);
-
-        if (flightInfo.length === 0) {
-          return { ...booking, passengerCount, flight: null };
-        }
-
-        const flight = flightInfo[0].Flight;
-        const route = flightInfo[0].Route;
-
-        // Lấy sân bay đi và đến
-        const [depAirport] = await db
-          .select()
-          .from(airports)
-          .where(eq(airports.airportID, route.departureAirportID))
-          .limit(1);
-
-        const [arrAirport] = await db
-          .select()
-          .from(airports)
-          .where(eq(airports.airportID, route.arrivalAirportID))
-          .limit(1);
-
-        return {
-          ...booking,
-          passengerCount,
-          flight: {
-            flightID: flight.flightID,
-            scheduledDeparture: flight.scheduledDeparture,
-            scheduledArrival: flight.scheduledArrival,
-            status: flight.status,
-            departureAirport: depAirport
-              ? {
-                  airportID: depAirport.airportID,
-                  iataCode: depAirport.iataCode,
-                  city: depAirport.city,
-                }
-              : null,
-            arrivalAirport: arrAirport
-              ? {
-                  airportID: arrAirport.airportID,
-                  iataCode: arrAirport.iataCode,
-                  city: arrAirport.city,
-                }
-              : null,
-          },
-        };
+    .input(
+      z.object({
+        status: z.string().optional(),
+        page: z.number().default(1),
+        limit: z.number().default(20),
       })
-    );
+    )
+    .query(async ({ input }) => {
+      const db = getDb();
+      const offset = (input.page - 1) * input.limit;
 
-    return enriched;
-  }),
+      const where = input.status
+        ? eq(bookings.status, input.status as any)
+        : undefined;
+
+      // Lấy danh sách booking
+      const bookingList = await db
+        .select()
+        .from(bookings)
+        .where(where)
+        .orderBy(desc(bookings.createdAt))
+        .limit(input.limit)
+        .offset(offset);
+
+      // Bổ sung thông tin chuyến bay và số khách
+      const enriched = await Promise.all(
+        bookingList.map(async booking => {
+          // Đếm số vé
+          const ticketCountResult = await db
+            .select({ count: count() })
+            .from(tickets)
+            .where(eq(tickets.bookingID, booking.bookingID));
+
+          const passengerCount = ticketCountResult[0]?.count ?? 0;
+
+          // Lấy ticket đầu tiên để biết flight
+          const ticketList = await db
+            .select()
+            .from(tickets)
+            .where(eq(tickets.bookingID, booking.bookingID))
+            .limit(1);
+
+          if (ticketList.length === 0) {
+            return { ...booking, passengerCount, flight: null };
+          }
+
+          // Lấy thông tin chuyến bay + route
+          const flightInfo = await db
+            .select()
+            .from(flights)
+            .innerJoin(routes, eq(flights.routeID, routes.routeID))
+            .where(eq(flights.flightID, ticketList[0].flightID))
+            .limit(1);
+
+          if (flightInfo.length === 0) {
+            return { ...booking, passengerCount, flight: null };
+          }
+
+          const flight = flightInfo[0].Flight;
+          const route = flightInfo[0].Route;
+
+          // Lấy sân bay đi và đến
+          const [depAirport] = await db
+            .select()
+            .from(airports)
+            .where(eq(airports.airportID, route.departureAirportID))
+            .limit(1);
+
+          const [arrAirport] = await db
+            .select()
+            .from(airports)
+            .where(eq(airports.airportID, route.arrivalAirportID))
+            .limit(1);
+
+          return {
+            ...booking,
+            passengerCount,
+            flight: {
+              flightID: flight.flightID,
+              scheduledDeparture: flight.scheduledDeparture,
+              scheduledArrival: flight.scheduledArrival,
+              status: flight.status,
+              departureAirport: depAirport
+                ? {
+                    airportID: depAirport.airportID,
+                    iataCode: depAirport.iataCode,
+                    city: depAirport.city,
+                  }
+                : null,
+              arrivalAirport: arrAirport
+                ? {
+                    airportID: arrAirport.airportID,
+                    iataCode: arrAirport.iataCode,
+                    city: arrAirport.city,
+                  }
+                : null,
+            },
+          };
+        })
+      );
+
+      return enriched;
+    }),
 
   // Customer management
   customerList: adminQuery
