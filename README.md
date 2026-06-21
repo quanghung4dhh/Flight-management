@@ -109,3 +109,221 @@ Database sẽ được tạo sẵn các tài khoản
 
 - Thanh toán được giả lập (simulated), không có tích hợp thật
 - Admin được phân quyền tự động cho user có role="admin"
+
+---
+# Các câu truy vấn sử dụng
+
+## 1. Đăng nhập / Xác thực
+
+```sql
+-- Tìm tài khoản theo username (auth-router.ts)
+SELECT * FROM Accounts WHERE Username = ? LIMIT 1;
+```
+
+---
+
+## 2. Tìm kiếm chuyến bay
+
+```sql
+-- Tìm route theo sân bay đi/đến (flightRouter.ts - search)
+SELECT * FROM Route 
+WHERE DepartureAirportID = ? AND ArrivalAirportID = ? 
+LIMIT 1;
+
+-- Tìm chuyến bay theo route + ngày + status
+SELECT * FROM Flight 
+WHERE RouteID = ? 
+  AND ScheduledDeparture BETWEEN ? AND ? 
+  AND Status = 'scheduled'
+ORDER BY ScheduledDeparture;
+
+-- Lấy giá vé theo chuyến bay + hạng ghế
+SELECT * FROM FlightPricing 
+WHERE FlightID = ? AND SeatClassID = ? 
+LIMIT 1;
+```
+
+---
+
+## 3. Lấy danh sách ghế
+
+```sql
+-- Lấy ghế của máy bay + tên hạng ghế
+SELECT Seat.SeatID, Seat.SeatNumber, Seat.SeatClassID, SeatClass.Name
+FROM Seat
+INNER JOIN SeatClass ON Seat.SeatClassID = SeatClass.SeatClassID
+WHERE Seat.AircraftID = ?;
+
+-- Kiểm tra ghế đã đặt (loại trừ cancelled)
+SELECT SeatID FROM Ticket 
+WHERE FlightID = ? AND Status != 'cancelled';
+```
+
+---
+
+## 4. Đặt vé (Transaction)
+
+```sql
+-- Tạo booking
+INSERT INTO Booking (BookingID, CustomerID, BookDate, TotalAmount, Status)
+VALUES (?, ?, NOW(), ?, 'pending');
+
+-- Tạo ticket
+INSERT INTO Ticket (TicketID, BookingID, FlightID, SeatID, Status, PassengerName, PassengerPassport, PurchasedPrice)
+VALUES (?, ?, ?, ?, 'active', ?, ?, ?);
+```
+
+---
+
+## 5. Thanh toán
+
+```sql
+-- Tạo payment
+INSERT INTO Payment (PaymentID, TransactionID, BookingID, PayDate, Method, Status)
+VALUES (?, ?, ?, NOW(), ?, 'pending');
+
+-- Xác nhận thanh toán
+UPDATE Payment SET Status = 'paid' WHERE PaymentID = ?;
+UPDATE Booking SET Status = 'confirmed' WHERE BookingID = ?;
+```
+
+---
+
+## 6. Lịch sử đặt vé (My Bookings)
+
+```sql
+-- Lấy booking của user + đếm số vé + thông tin chuyến bay
+SELECT b.*, COUNT(t.TicketID) as passengerCount
+FROM Booking b
+LEFT JOIN Ticket t ON b.BookingID = t.BookingID
+WHERE b.CustomerID = ?
+GROUP BY b.BookingID
+ORDER BY b.CreatedAt DESC;
+```
+
+---
+
+## 7. Hủy vé
+
+```sql
+-- Cập nhật booking
+UPDATE Booking SET Status = 'cancelled' WHERE BookingID = ?;
+
+-- Cập nhật tickets
+UPDATE Ticket SET Status = 'cancelled' WHERE BookingID = ?;
+```
+
+---
+
+## 8. Dashboard Admin — Thống kê
+
+```sql
+-- Tổng số chuyến bay
+SELECT COUNT(*) FROM Flight;
+
+-- Tổng số đặt vé
+SELECT COUNT(*) FROM Booking;
+
+-- Tổng số người dùng
+SELECT COUNT(*) FROM Accounts;
+
+-- Tổng doanh thu
+SELECT COALESCE(SUM(b.TotalAmount), 0)
+FROM Payment p
+INNER JOIN Booking b ON p.BookingID = b.BookingID
+WHERE p.Status = 'paid';
+```
+
+---
+
+## 9. Báo cáo doanh thu theo ngày
+
+```sql
+SELECT DATE(PayDate) as date, 
+       COALESCE(SUM(b.TotalAmount), 0) as total,
+       COUNT(*) as count
+FROM Payment p
+INNER JOIN Booking b ON p.BookingID = b.BookingID
+WHERE p.Status = 'paid'
+  AND PayDate BETWEEN ? AND ?
+GROUP BY DATE(PayDate)
+ORDER BY DATE(PayDate);
+```
+
+---
+
+## 10. Quản lý chuyến bay (Admin)
+
+```sql
+-- Danh sách chuyến bay có phân trang
+SELECT * FROM Flight 
+ORDER BY ScheduledDeparture DESC
+LIMIT ? OFFSET ?;
+```
+
+---
+
+## 11. Quản lý đặt vé (Admin)
+
+```sql
+-- Danh sách booking có phân trang + filter status
+SELECT * FROM Booking 
+WHERE Status = ?
+ORDER BY CreatedAt DESC
+LIMIT ? OFFSET ?;
+```
+
+---
+
+## 12. Danh sách sân bay
+
+```sql
+SELECT * FROM Airport ORDER BY IATACode;
+```
+
+---
+
+## 13. Tìm kiếm sân bay
+
+```sql
+SELECT * FROM Airport
+WHERE IATACode LIKE ? OR City LIKE ? OR AirportID LIKE ?
+LIMIT 10;
+```
+
+---
+
+## 14. Profile người dùng
+
+```sql
+-- Lấy thông tin account + customer
+SELECT a.*, c.*
+FROM Accounts a
+LEFT JOIN Customers c ON a.AccountID = c.AccountID
+WHERE a.AccountID = ?;
+```
+
+---
+
+## 15. Cập nhật profile
+
+```sql
+UPDATE Customers 
+SET Name = ?, Phone = ?, Email = ?, Passport = ?, Address = ?, Birthday = ?
+WHERE AccountID = ?;
+```
+
+---
+
+## Tóm tắt theo loại
+
+| Loại | Số lượng | Ví dụ |
+|------|----------|-------|
+| **SELECT** | 9 | Tìm chuyến bay, lịch sử vé, thống kê |
+| **INSERT** | 4 | Đặt vé, thanh toán, tạo tài khoản |
+| **UPDATE** | 4 | Hủy vé, xác nhận thanh toán, cập nhật profile |
+| **COUNT/SUM** | 2 | Dashboard, báo cáo doanh thu |
+
+---
+
+
