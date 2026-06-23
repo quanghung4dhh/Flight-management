@@ -6,7 +6,7 @@ Hệ thống quản lý chuyến bay SkyViet Airlines - Đồ án đại học m
 
 ## Deployed URL
 
-Frontend: Đang cập nhật
+Frontend: [Flight-management](https://flight-management-production-cd92.up.railway.app/)
 
 ## Cách chạy local
 
